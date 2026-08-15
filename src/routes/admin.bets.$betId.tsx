@@ -103,6 +103,37 @@ function BetDetailPage() {
         )}
       </Panel>
 
+      <Panel title="Ticket preview (as printed)">
+        {ticket.isPending && (
+          <p className="py-6 text-center text-[11px] text-xb-text-muted">Building receipt…</p>
+        )}
+        {ticket.data && (
+          <TicketPreview
+            ticket={ticket.data}
+            legControls={(i) => {
+              const m = bet.matches[i];
+              if (!m) return null;
+              return (
+                <>
+                  <Btn size="xs" tone="green" onClick={() => setMatchStatus(bet.id, m.id, "won")}>
+                    Won
+                  </Btn>
+                  <Btn size="xs" tone="red" onClick={() => setMatchStatus(bet.id, m.id, "lost")}>
+                    Lost
+                  </Btn>
+                  <Btn size="xs" onClick={() => setMatchStatus(bet.id, m.id, "void")}>
+                    Void
+                  </Btn>
+                  <Btn size="xs" tone="ghost" onClick={() => removeMatch(bet.id, m.id)}>
+                    Remove
+                  </Btn>
+                </>
+              );
+            }}
+          />
+        )}
+      </Panel>
+
       <Panel title={`Matches (${bet.matches.length})`}>
         <Table head={["Match", "League", "Market", "Pick", "Odds", "Kick-off", "Status", "Actions"]}>
           {bet.matches.map((m) => (
