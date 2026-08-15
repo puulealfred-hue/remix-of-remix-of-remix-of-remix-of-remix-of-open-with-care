@@ -92,6 +92,8 @@ export async function settlePaymentSession(
   const sessionRef = doc(db, PAYMENT_SESSIONS, session.id);
   const userRef = doc(db, COL.users, session.userId);
 
+  let firstDepositBonus = 0;
+
   const applied = await runTransaction(db, async (tx) => {
     const snap = await tx.get(sessionRef);
     if (!snap.exists()) return false;
@@ -99,10 +101,20 @@ export async function settlePaymentSession(
     if (current.settled) return false;
 
     if (session.kind === "deposit" && outcome === "success") {
+      // First real deposit earns the provider minimum for that currency as a
+      // non-withdrawable bonus — stake only, never cashable.
+      const userSnap = await tx.get(userRef);
+      const user = (userSnap.data() ?? {}) as { totalIn?: number; firstDepositBonusAt?: number };
+      const isFirst = !user.firstDepositBonusAt && !(Number(user.totalIn) > 0);
+      firstDepositBonus = isFirst ? minDepositFor(session.currency) : 0;
+
       tx.update(userRef, {
         balance: increment(session.amount),
         totalIn: increment(session.amount),
         lastSeen: Date.now(),
+        ...(firstDepositBonus > 0
+          ? { bonusBalance: increment(firstDepositBonus), firstDepositBonusAt: Date.now() }
+          : {}),
       });
     }
     if (session.kind === "withdraw" && outcome === "failed") {
@@ -121,6 +133,7 @@ export async function settlePaymentSession(
     });
     return true;
   });
+
 
   if (!applied) return "skipped";
 
