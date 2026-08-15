@@ -10,7 +10,9 @@ import {
   where,
 } from "firebase/firestore";
 import { firebase } from "./firebase";
+import { minDepositFor } from "./payments";
 import { COL, pushTransaction, siteDoc } from "./firestore-db";
+
 
 export const PAYMENT_SESSIONS = "payment_sessions";
 
