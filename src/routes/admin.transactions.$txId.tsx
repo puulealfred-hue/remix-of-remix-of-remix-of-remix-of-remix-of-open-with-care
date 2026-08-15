@@ -10,7 +10,7 @@ export const Route = createFileRoute("/admin/transactions/$txId")({
 function TxDetailPage() {
   const { txId } = Route.useParams();
   const navigate = useNavigate();
-  const { state, updateTransaction, deleteTransaction } = useAdmin();
+  const { state, deleteTransaction } = useAdmin();
   const tx = state.transactions.find((t) => t.id === txId);
 
   if (!tx) {
