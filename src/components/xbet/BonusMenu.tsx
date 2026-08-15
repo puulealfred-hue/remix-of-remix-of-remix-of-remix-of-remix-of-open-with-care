@@ -1,17 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Gift, Users, ChevronRight, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
-import { REFERRAL_BONUS, SIGNUP_BONUS, money, useAuth } from "./AuthContext";
-
-const BONUSES = [
-  {
-    key: "signup",
-    icon: Gift,
-    title: `Sign-up bonus UGX ${money(SIGNUP_BONUS)}`,
-    body: "Credited automatically when you create your account. Use it as stake — winnings become withdrawable cash.",
-    cta: "Claimed",
-  },
-] as const;
+import { REFERRAL_BONUS, money, useAuth } from "./AuthContext";
+import { minDepositFor } from "@/lib/payments";
 
 /** Live referral card — real code, real payout of UGX 100 per friend. */
 function ReferralCard() {
@@ -75,10 +66,25 @@ function ReferralCard() {
 }
 
 export function BonusMenu() {
-
+  const { currency } = useAuth();
   const [open, setOpen] = useState(false);
-  const [claimed, setClaimed] = useState<string[]>(["signup"]);
+  const [claimed, setClaimed] = useState<string[]>([]);
   const rootRef = useRef<HTMLDivElement | null>(null);
+
+  // The welcome bonus equals the provider's minimum deposit for the player's
+  // currency and lands automatically on the first deposit.
+  const BONUSES = useMemo(
+    () => [
+      {
+        key: "first-deposit",
+        icon: Gift,
+        title: `First deposit bonus ${currency} ${money(minDepositFor(currency))}`,
+        body: "Credited automatically the first time you deposit. Use it as stake — winnings become withdrawable cash. The bonus itself cannot be withdrawn.",
+        cta: "Auto",
+      },
+    ],
+    [currency],
+  );
 
   useEffect(() => {
     if (!open) return;

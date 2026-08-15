@@ -20,7 +20,17 @@ export const createRoyalLaunch = createServerFn({ method: "POST" })
     const operatorId = process.env["ROYAL_OPERATOR_ID"] || ROYAL.operatorId;
     const secret = process.env["ROYAL_API_SECRET"] || ROYAL.secret;
 
-    const origin = new URL(getRequest().url).origin;
+    // The game server calls our wallet API server-to-server, so it needs a
+    // publicly reachable origin. Sandboxed `id-preview--…` hosts redirect every
+    // request, which made every wallet call fail and the game never started;
+    // map them onto the stable `project--…-dev` host instead.
+    const requestOrigin = new URL(getRequest().url).origin;
+    const envOrigin = process.env["ROYAL_WALLET_ORIGIN"];
+    const stable = requestOrigin.replace(
+      /^https:\/\/id-preview--([0-9a-f-]+)\.lovable\.app$/i,
+      "https://project--$1-dev.lovable.app",
+    );
+    const origin = (envOrigin || stable).replace(/\/$/, "");
     const walletUrl = `${origin}${ROYAL.walletPath}`;
 
     const body = JSON.stringify({
@@ -43,7 +53,8 @@ export const createRoyalLaunch = createServerFn({ method: "POST" })
     );
     const sigBytes = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(body));
     const signature =
-      "sha256=" + [...new Uint8Array(sigBytes)].map((b) => b.toString(16).padStart(2, "0")).join("");
+      "sha256=" +
+      [...new Uint8Array(sigBytes)].map((b) => b.toString(16).padStart(2, "0")).join("");
 
     try {
       const res = await fetch(`${base}/api/public/rgs/session`, {
@@ -69,7 +80,8 @@ export const createRoyalLaunch = createServerFn({ method: "POST" })
         };
       }
       const json = (await res.json()) as { launchUrl?: string };
-      if (!json.launchUrl) return { launchUrl: null as string | null, error: "No launch URL returned." };
+      if (!json.launchUrl)
+        return { launchUrl: null as string | null, error: "No launch URL returned." };
       return { launchUrl: json.launchUrl, error: null as string | null };
     } catch {
       return { launchUrl: null as string | null, error: "Could not reach the game server." };
