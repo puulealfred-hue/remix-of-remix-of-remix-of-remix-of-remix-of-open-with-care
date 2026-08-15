@@ -513,9 +513,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await patchPaymentSession(sessionId, {
           internalReference: String(res.data.internal_reference ?? ""),
         });
-        const payload = res.data as { redirect_url?: string; url?: string };
-        const url = payload.redirect_url ?? payload.url;
-        if (isCard && url && typeof window !== "undefined") window.open(url, "_blank", "noopener");
+        if (isCard) {
+          // Relworx names the hosted-checkout link differently across responses.
+          const p = res.data as Record<string, unknown>;
+          const url = [
+            p["redirect_url"],
+            p["url"],
+            p["hosted_page_url"],
+            p["payment_url"],
+            p["checkout_url"],
+            (p["data"] as Record<string, unknown> | undefined)?.["redirect_url"],
+            (p["data"] as Record<string, unknown> | undefined)?.["url"],
+          ].find((v) => typeof v === "string" && v.startsWith("http")) as string | undefined;
+          if (!url) {
+            const msg = String(
+              res.data.message ?? "Card checkout link was not returned by the payment provider",
+            );
+            await patchPaymentSession(sessionId, {
+              status: "failed",
+              settled: true,
+              message: msg,
+            });
+            throw new Error(msg);
+          }
+          if (typeof window !== "undefined") window.location.assign(url);
+        }
+
         track("Started a deposit", `${currency} ${amount} via ${method}`);
         return reference;
       },
