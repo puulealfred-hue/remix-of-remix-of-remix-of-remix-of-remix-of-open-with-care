@@ -53,45 +53,55 @@ export function SlideCarousel({
     );
   }
 
-  const slide = slides[Math.min(i, slides.length - 1)]!;
-
-  const image = slide.image ? (
-    <img
-      key={slide.image}
-      src={slide.image}
-      alt={slide.title || "Promotion"}
-      className="block h-full w-full object-cover"
-    />
-  ) : null;
+  const active = Math.min(i, slides.length - 1);
 
   return (
     <div className={`relative ${heightClass} overflow-hidden rounded-none sm:rounded-2xl bg-black font-xb shadow-sm`}>
-      {slide.link ? (
-        <a href={slide.link} className="block h-full w-full" aria-label={slide.title || "Promotion"}>
-          {image}
-        </a>
-      ) : (
-        image
-      )}
+      {/* Soft horizontal slide: one track, all slides, eased transform. */}
+      <div
+        className="flex h-full w-full transition-transform duration-700 ease-[cubic-bezier(0.4,0,0.2,1)]"
+        style={{ transform: `translateX(-${active * 100}%)` }}
+      >
+        {slides.map((s) => {
+          const image = s.image ? (
+            <img
+              src={s.image}
+              alt={s.title || "Promotion"}
+              className="block h-full w-full object-cover"
+              draggable={false}
+            />
+          ) : null;
+          return (
+            <div key={s.id} className="h-full w-full shrink-0 grow-0 basis-full">
+              {s.link ? (
+                <a href={s.link} className="block h-full w-full" aria-label={s.title || "Promotion"}>
+                  {image}
+                </a>
+              ) : (
+                image
+              )}
+            </div>
+          );
+        })}
+      </div>
 
       {slides.length > 1 && (
-        <>
-          <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-1.5">
-            {slides.map((s, idx) => (
-              <button
-                key={s.id}
-                aria-label={`Go to ${s.title}`}
-                onClick={() => setI(idx)}
-                className={
-                  idx === i
-                    ? "h-1.5 w-5 rounded-full bg-xb-on-dark"
-                    : "h-1.5 w-1.5 rounded-full bg-xb-on-dark/50 hover:bg-xb-on-dark/80"
-                }
-              />
-            ))}
-          </div>
-        </>
+        <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-1.5">
+          {slides.map((s, idx) => (
+            <button
+              key={s.id}
+              aria-label={`Go to ${s.title}`}
+              onClick={() => setI(idx)}
+              className={
+                idx === active
+                  ? "h-1.5 w-5 rounded-full bg-xb-on-dark transition-all duration-300"
+                  : "h-1.5 w-1.5 rounded-full bg-xb-on-dark/50 transition-all duration-300 hover:bg-xb-on-dark/80"
+              }
+            />
+          ))}
+        </div>
       )}
     </div>
   );
 }
+
