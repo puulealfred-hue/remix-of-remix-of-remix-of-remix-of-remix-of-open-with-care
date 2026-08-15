@@ -6,11 +6,20 @@ import { matchesQuery } from "@/lib/sports-queries";
 import { ugDateTime } from "@/lib/time";
 import type { Slide } from "@/lib/admin-types";
 
-type Target = "none" | "lucky" | "aviator" | "slot" | "virtual" | "match" | "custom";
+type Target =
+  | "none"
+  | "lucky"
+  | "winner"
+  | "aviator"
+  | "slot"
+  | "virtual"
+  | "match"
+  | "custom";
 
 const TARGETS: { key: Target; label: string; to?: string }[] = [
   { key: "none", label: "No link" },
   { key: "lucky", label: "Lucky winner page", to: "/lucky-winner" },
+  { key: "winner", label: "A specific winner page" },
   { key: "aviator", label: "Aviator game", to: "/aviator" },
   { key: "slot", label: "Slots page", to: "/slot" },
   { key: "virtual", label: "Virtual games", to: "/virtual" },
