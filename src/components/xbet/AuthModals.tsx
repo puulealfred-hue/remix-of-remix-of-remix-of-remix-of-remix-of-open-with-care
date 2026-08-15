@@ -1,5 +1,15 @@
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, Gift, Lock, Phone, ShieldCheck, Smartphone, Sparkles, X, Zap } from "lucide-react";
+import {
+  ChevronDown,
+  Gift,
+  Lock,
+  Phone,
+  ShieldCheck,
+  Smartphone,
+  Sparkles,
+  X,
+  Zap,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "./AuthContext";
 import {
@@ -14,13 +24,7 @@ import {
 export const COUNTRIES = PAY_COUNTRIES.map((c) => c.name);
 export const CURRENCIES = PAY_COUNTRIES.map((c) => `${c.currencyName} (${c.currency})`);
 
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
       <span className="mb-1 block text-[11px] font-medium uppercase tracking-wide text-xb-text-muted">
@@ -200,7 +204,6 @@ function LoginModal() {
     }
   };
 
-
   return (
     <Shell
       title="Log in"
@@ -239,7 +242,6 @@ function LoginModal() {
             />
             <Phone className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-xb-text-muted" />
           </div>
-
         </div>
       </Field>
       <Field label="Password">
@@ -256,7 +258,9 @@ function LoginModal() {
         </div>
       </Field>
       <button
-        onClick={() => toast("Password recovery", { description: "We will send you a reset code." })}
+        onClick={() =>
+          toast("Password recovery", { description: "We will send you a reset code." })
+        }
         className="text-[12px] text-xb-blue underline"
       >
         Forgot your password?
@@ -289,7 +293,6 @@ function RegisterModal() {
   const [regPassword, setRegPassword] = useState("");
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
-
 
   const [promo, setPromo] = useState("");
   const [agree, setAgree] = useState(true);
@@ -351,13 +354,10 @@ function RegisterModal() {
       toast.success("Account created!", {
         description: `Deposit to unlock your free bonus · ${country.flag} ${country.name} · ${currency}`,
       });
-
     } catch (err) {
       toast.error((err as Error).message);
     }
   };
-
-
 
   return (
     <Shell
@@ -376,8 +376,8 @@ function RegisterModal() {
               </span>
             </div>
             <p className="mt-3 text-[12px] leading-relaxed text-xb-on-dark-muted">
-              Join thousands of players betting on live football, basketball and tennis with the best
-              odds in Uganda.
+              Join thousands of players betting on live football, basketball and tennis with the
+              best odds in Uganda.
             </p>
           </div>
           <div className="mt-6 space-y-2 text-[12px] text-xb-on-dark-muted">
@@ -499,7 +499,6 @@ function RegisterModal() {
           </Field>
         </div>
       )}
-
 
       <Field label="Promo / referral code (if you have one)">
         <input

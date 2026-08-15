@@ -33,7 +33,6 @@ export const createRoyalLaunch = createServerFn({ method: "POST" })
     const origin = (envOrigin || stable).replace(/\/$/, "");
     const walletUrl = `${origin}${ROYAL.walletPath}`;
 
-
     const body = JSON.stringify({
       operatorId,
       playerId: data.playerId,
@@ -54,7 +53,8 @@ export const createRoyalLaunch = createServerFn({ method: "POST" })
     );
     const sigBytes = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(body));
     const signature =
-      "sha256=" + [...new Uint8Array(sigBytes)].map((b) => b.toString(16).padStart(2, "0")).join("");
+      "sha256=" +
+      [...new Uint8Array(sigBytes)].map((b) => b.toString(16).padStart(2, "0")).join("");
 
     try {
       const res = await fetch(`${base}/api/public/rgs/session`, {
@@ -80,7 +80,8 @@ export const createRoyalLaunch = createServerFn({ method: "POST" })
         };
       }
       const json = (await res.json()) as { launchUrl?: string };
-      if (!json.launchUrl) return { launchUrl: null as string | null, error: "No launch URL returned." };
+      if (!json.launchUrl)
+        return { launchUrl: null as string | null, error: "No launch URL returned." };
       return { launchUrl: json.launchUrl, error: null as string | null };
     } catch {
       return { launchUrl: null as string | null, error: "Could not reach the game server." };

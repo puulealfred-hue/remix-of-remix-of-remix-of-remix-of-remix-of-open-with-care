@@ -75,7 +75,6 @@ export const PAY_COUNTRIES: PayCountry[] = [
     // Verified live against the provider: TZS collections start at 500.
     minMobile: 500,
     maxMobile: 5_000_000,
-
   },
   {
     code: "RW",
@@ -178,7 +177,6 @@ export function formatMoney(amount: number, currency = "UGX"): string {
   const n = Number.isFinite(amount) ? amount : 0;
   return `${currency} ${n.toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
 }
-
 
 /* ------------------------------------------------------------------ */
 /* IP geolocation (free, key-less, with fallback)                      */

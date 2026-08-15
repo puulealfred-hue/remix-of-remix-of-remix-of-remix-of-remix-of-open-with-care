@@ -4,7 +4,6 @@ import { toast } from "sonner";
 import { REFERRAL_BONUS, money, useAuth } from "./AuthContext";
 import { minDepositFor } from "@/lib/payments";
 
-
 /** Live referral card — real code, real payout of UGX 100 per friend. */
 function ReferralCard() {
   const { user, referralCode, referralLink, referralCount, openRegister } = useAuth();
@@ -97,7 +96,6 @@ export function BonusMenu() {
   }, [open]);
 
   const pending = BONUSES.filter((b) => !claimed.includes(b.key)).length + 1;
-
 
   return (
     <div className="relative" ref={rootRef}>

@@ -13,7 +13,11 @@ export function HeroBanner() {
   const slides = useMemo(() => visibleSlides(content.heroSlides), [content.heroSlides]);
 
   return (
-    <SlideCarousel slides={slides} ready={ready} heightClass="h-[150px] sm:h-[195px] md:h-[250px]" />
+    <SlideCarousel
+      slides={slides}
+      ready={ready}
+      heightClass="h-[150px] sm:h-[195px] md:h-[250px]"
+    />
   );
 }
 
@@ -38,7 +42,6 @@ const games = [
   },
 ];
 
-
 export function GameTiles() {
   return (
     <div className="mt-2 grid grid-cols-3 gap-1.5 px-1.5 sm:gap-2 sm:px-0 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 font-xb">
@@ -60,7 +63,9 @@ export function GameTiles() {
             <span className="grid h-3.5 w-3.5 shrink-0 place-items-center rounded-sm bg-xb-odds text-[8px] font-black text-xb-blue">
               B
             </span>
-            <span className="truncate text-[10px] font-bold leading-tight text-xb-text md:text-[11.5px]">{g.name}</span>
+            <span className="truncate text-[10px] font-bold leading-tight text-xb-text md:text-[11.5px]">
+              {g.name}
+            </span>
           </div>
         </Link>
       ))}

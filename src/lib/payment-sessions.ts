@@ -13,7 +13,6 @@ import { firebase } from "./firebase";
 import { minDepositFor } from "./payments";
 import { COL, pushTransaction, siteDoc } from "./firestore-db";
 
-
 export const PAYMENT_SESSIONS = "payment_sessions";
 
 export type PaymentSession = {
@@ -136,7 +135,6 @@ export async function settlePaymentSession(
     return true;
   });
 
-
   if (!applied) return "skipped";
 
   const float = session.kind === "deposit" ? session.amount : -session.amount;
@@ -168,7 +166,6 @@ export async function settlePaymentSession(
       });
     }
   } else {
-
     await pushTransaction({
       kind: session.kind === "deposit" ? "Deposit" : "Withdrawal",
       amount: 0,

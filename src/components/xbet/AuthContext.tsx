@@ -52,7 +52,6 @@ export type PayInput = {
 
 export const REFERRAL_BONUS = 100;
 
-
 /** Stable, shareable referral code derived from the account phone number. */
 export function referralCodeFor(phone: string) {
   return `BP${normalizePhone(phone).slice(-6)}`;
