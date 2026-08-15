@@ -349,8 +349,9 @@ function RegisterModal() {
         name: name.trim(),
       });
       toast.success("Account created!", {
-        description: `Free bet bonus added · ${country.flag} ${country.name} · ${currency}`,
+        description: `Deposit to unlock your free bonus · ${country.flag} ${country.name} · ${currency}`,
       });
+
     } catch (err) {
       toast.error((err as Error).message);
     }
