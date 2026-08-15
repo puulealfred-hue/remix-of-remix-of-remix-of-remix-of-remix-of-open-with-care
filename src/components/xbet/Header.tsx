@@ -5,7 +5,18 @@ import { toast } from "sonner";
 import { AccountMenu } from "./AccountMenu";
 import { BonusMenu } from "./BonusMenu";
 import { money, useAuth } from "./AuthContext";
-import { eatClock, eatFull, useServerTime } from "@/lib/server-time";
+import { useServerTime } from "@/lib/server-time";
+import {
+  DEFAULT_LOCALE,
+  SUPPORTED_COUNTRIES,
+  detectCountryCode,
+  localClock,
+  localFull,
+  localeFor,
+  setPreferredCountry,
+  type CountryLocale,
+} from "@/lib/site-country";
+import { countryByCode } from "@/lib/payments";
 
 const navItems = [
   { label: "SPORT", to: "/" },
