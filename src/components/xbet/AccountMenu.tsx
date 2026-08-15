@@ -203,7 +203,7 @@ function MoneyForm({ kind }: { kind: "deposit" | "withdraw" }) {
         value={amount}
         onChange={(e) => setAmount(e.target.value.replace(/[^\d.]/g, ""))}
         inputMode="decimal"
-        placeholder={`Amount in ${currency}`}
+        placeholder={`Amount in ${activeCurrency}`}
         className={inputCls}
       />
       <div className="flex gap-1">
@@ -214,7 +214,7 @@ function MoneyForm({ kind }: { kind: "deposit" | "withdraw" }) {
               onClick={() => setAmount(String(v))}
               className="flex-1 rounded-lg bg-xb-odds py-1.5 text-[11px] text-xb-text hover:bg-xb-odds-hover"
             >
-              {formatMoney(v, currency)}
+              {formatMoney(v, activeCurrency)}
             </button>
           ),
         )}

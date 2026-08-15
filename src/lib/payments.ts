@@ -72,7 +72,8 @@ export const PAY_COUNTRIES: PayCountry[] = [
       { id: "Vodacom M-Pesa", label: "Vodacom M-Pesa", type: "mobile" },
       { id: "Halotel", label: "Halopesa", type: "mobile" },
     ],
-    minMobile: 500,
+    // Provider rejects smaller Tanzanian collections: fee exceeds the amount.
+    minMobile: 3_000,
     maxMobile: 5_000_000,
   },
   {
