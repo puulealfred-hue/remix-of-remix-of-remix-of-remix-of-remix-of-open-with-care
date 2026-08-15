@@ -34,6 +34,12 @@ export function Header() {
   const now = useServerTime();
   const [clockOpen, setClockOpen] = useState(false);
   const clockRef = useRef<HTMLDivElement | null>(null);
+  // Detected market drives the flag, clock timezone and wallet currency shown.
+  const [loc, setLoc] = useState<CountryLocale>(DEFAULT_LOCALE);
+
+  useEffect(() => {
+    setLoc(localeFor(countryByCode(detectCountryCode()) ?? DEFAULT_LOCALE.country));
+  }, []);
 
   const { user, balance, isAdmin, openLogin, openRegister } = useAuth();
 
