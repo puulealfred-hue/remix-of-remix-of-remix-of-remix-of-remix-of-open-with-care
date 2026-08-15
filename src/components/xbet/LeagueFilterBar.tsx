@@ -1,6 +1,6 @@
 import { useMemo, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronRight, ChevronLeft } from "lucide-react";
+import { ChevronRight, ChevronLeft, Check, X } from "lucide-react";
 import { useSportFilters } from "./SportFilterContext";
 import { leaguesQuery, type League } from "@/lib/sports-queries";
 import { countryRank, leagueRank } from "@/lib/popular";
@@ -32,10 +32,12 @@ function Scroller({ children }: { children: React.ReactNode }) {
 }
 
 export function LeagueFilterBar() {
-  const { sport, leagueId, countryId, setLeague } = useSportFilters();
+  const { sport, leagueIds, countryIds, toggleLeague, toggleCountry, clearFilters } =
+    useSportFilters();
   const leagues = useQuery(leaguesQuery(sport));
 
   const all = leagues.data ?? [];
+  const selectedCount = leagueIds.length + countryIds.length;
 
   const countries = useMemo(() => {
     const map = new Map<number, { key: number; name: string; logo: string | null }>();
@@ -50,90 +52,115 @@ export function LeagueFilterBar() {
     );
   }, [all]);
 
-  const activeCountry = countries.find((c) => c.key === countryId) ?? null;
+  const activeCountries = countries.filter((c) => countryIds.includes(c.key));
 
   const shown: League[] = useMemo(() => {
-    const list = activeCountry ? all.filter((l) => l.countryKey === activeCountry.key) : all;
-    return [...list]
+    const list =
+      countryIds.length > 0 ? all.filter((l) => countryIds.includes(l.countryKey)) : all;
+    const selected = all.filter((l) => leagueIds.includes(l.key));
+    const rest = [...list]
+      .filter((l) => !leagueIds.includes(l.key))
       .sort(
         (a, b) =>
           leagueRank(sport, a.name, a.country) - leagueRank(sport, b.name, b.country) ||
           a.name.localeCompare(b.name),
       )
-      .slice(0, activeCountry ? 60 : 30);
-  }, [all, activeCountry, sport]);
+      .slice(0, countryIds.length > 0 ? 400 : 40);
+    return [...selected, ...rest];
+  }, [all, countryIds, leagueIds, sport]);
 
   if (all.length === 0) return null;
 
   return (
     <div className="border-b border-xb-line px-3 py-1.5">
-      <div className="mb-1 text-[10px] text-xb-text-muted">Countries</div>
+      <div className="mb-1 flex items-center gap-2 text-[10px] text-xb-text-muted">
+        <span>Countries — pick as many as you like</span>
+        {selectedCount > 0 && (
+          <button
+            onClick={clearFilters}
+            className="ml-auto inline-flex items-center gap-1 rounded-full bg-xb-odds px-2 py-0.5 font-bold text-xb-text hover:bg-xb-odds-hover"
+          >
+            <X className="h-3 w-3" /> Clear {selectedCount} filter{selectedCount > 1 ? "s" : ""}
+          </button>
+        )}
+      </div>
       <Scroller>
         <button
-          onClick={() => setLeague(null, null)}
+          onClick={clearFilters}
           className={`flex h-6 shrink-0 items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium transition-colors ${
-            !countryId ? "bg-xb-text text-xb-panel" : "bg-xb-odds text-xb-text hover:bg-xb-odds-hover"
+            countryIds.length === 0
+              ? "bg-xb-text text-xb-panel"
+              : "bg-xb-odds text-xb-text hover:bg-xb-odds-hover"
           }`}
         >
           All
         </button>
-        {countries.map((c) => (
-          <button
-            key={c.key}
-            onClick={() => setLeague(null, c.key)}
-            className={`flex h-6 shrink-0 items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium transition-colors ${
-              countryId === c.key
-                ? "bg-xb-text text-xb-panel"
-                : "bg-xb-odds text-xb-text hover:bg-xb-odds-hover"
-            }`}
-          >
-            {c.logo ? (
-              <img src={c.logo} alt="" className="h-3 w-4 rounded-sm object-cover" loading="lazy" />
-            ) : (
-              <span className="h-3 w-4 rounded-sm bg-xb-odds-hover" />
-            )}
-            <span className="whitespace-nowrap">{c.name}</span>
-          </button>
-        ))}
+        {countries.map((c) => {
+          const on = countryIds.includes(c.key);
+          return (
+            <button
+              key={c.key}
+              onClick={() => toggleCountry(c.key)}
+              className={`flex h-6 shrink-0 items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium transition-colors ${
+                on ? "bg-xb-text text-xb-panel" : "bg-xb-odds text-xb-text hover:bg-xb-odds-hover"
+              }`}
+            >
+              {on ? (
+                <Check className="h-3 w-3" />
+              ) : c.logo ? (
+                <img src={c.logo} alt="" className="h-3 w-4 rounded-sm object-cover" loading="lazy" />
+              ) : (
+                <span className="h-3 w-4 rounded-sm bg-xb-odds-hover" />
+              )}
+              <span className="whitespace-nowrap">{c.name}</span>
+            </button>
+          );
+        })}
       </Scroller>
 
       <div className="mb-1 mt-2 text-[10px] text-xb-text-muted">
-        {activeCountry ? `${activeCountry.name} leagues` : "Popular leagues"}
+        {activeCountries.length > 0
+          ? `${activeCountries.map((c) => c.name).join(", ")} leagues`
+          : "Popular leagues"}
       </div>
       <Scroller>
-        {shown.map((l) => (
-          <button
-            key={l.key}
-            onClick={() => setLeague(l.key, l.countryKey || null)}
-            className={`flex h-8 w-[150px] shrink-0 items-center gap-1.5 rounded-md px-2 text-left transition-colors ${
-              leagueId === l.key ? "bg-xb-blue text-xb-on-dark" : "bg-xb-odds hover:bg-xb-odds-hover"
-            }`}
-          >
-            {l.logo ? (
-              <img src={l.logo} alt="" className="h-4 w-4 shrink-0 rounded-full object-contain" loading="lazy" />
-            ) : (
-              <span className="h-4 w-4 shrink-0 rounded-full bg-xb-odds-hover" />
-            )}
-            <span className="min-w-0">
-              <span
-                className={`block truncate text-[11px] font-bold leading-tight ${
-                  leagueId === l.key ? "text-xb-on-dark" : "text-xb-text"
-                }`}
-              >
-                {l.name}
+        {shown.map((l) => {
+          const on = leagueIds.includes(l.key);
+          return (
+            <button
+              key={l.key}
+              onClick={() => toggleLeague(l.key)}
+              className={`flex h-8 w-[150px] shrink-0 items-center gap-1.5 rounded-md px-2 text-left transition-colors ${
+                on ? "bg-xb-blue text-xb-on-dark" : "bg-xb-odds hover:bg-xb-odds-hover"
+              }`}
+            >
+              {on ? (
+                <Check className="h-4 w-4 shrink-0" />
+              ) : l.logo ? (
+                <img src={l.logo} alt="" className="h-4 w-4 shrink-0 rounded-full object-contain" loading="lazy" />
+              ) : (
+                <span className="h-4 w-4 shrink-0 rounded-full bg-xb-odds-hover" />
+              )}
+              <span className="min-w-0">
+                <span
+                  className={`block truncate text-[11px] font-bold leading-tight ${
+                    on ? "text-xb-on-dark" : "text-xb-text"
+                  }`}
+                >
+                  {l.name}
+                </span>
+                <span
+                  className={`block truncate text-[9px] leading-tight ${
+                    on ? "text-xb-on-dark/80" : "text-xb-text-muted"
+                  }`}
+                >
+                  {l.country || "International"}
+                </span>
               </span>
-              <span
-                className={`block truncate text-[9px] leading-tight ${
-                  leagueId === l.key ? "text-xb-on-dark/80" : "text-xb-text-muted"
-                }`}
-              >
-                {l.country || "International"}
-              </span>
-            </span>
-          </button>
-        ))}
+            </button>
+          );
+        })}
       </Scroller>
     </div>
   );
 }
-
