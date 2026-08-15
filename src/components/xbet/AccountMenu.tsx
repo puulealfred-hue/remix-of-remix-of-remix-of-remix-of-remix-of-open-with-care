@@ -58,8 +58,15 @@ function Empty({ text }: { text: string }) {
 
 function MoneyForm({ kind }: { kind: "deposit" | "withdraw" }) {
   const { deposit, withdraw, balance, withdrawable, bonus, currency, user } = useAuth();
-  const country =
+  const home =
     countryByName(user?.country) ?? countryByCurrency(currency) ?? countryFromPhone(user?.phone ?? "") ?? DEFAULT_COUNTRY;
+  // The player picks the market they are paying from, so mobile money works in
+  // every supported country — not just their profile country.
+  const [countryCode, setCountryCode] = useState(home.code);
+  const country = countryByCode(countryCode) ?? home;
+  const payCurrencies = [country.currency, ...(country.altCurrency ? [country.altCurrency.currency] : [])];
+  const [payCurrency, setPayCurrency] = useState(country.currency);
+  const activeCurrency = payCurrencies.includes(payCurrency) ? payCurrency : country.currency;
   const methods = methodsFor(country, kind);
   const [amount, setAmount] = useState("");
   const [phone, setPhone] = useState(user?.phone ?? "");
@@ -67,7 +74,15 @@ function MoneyForm({ kind }: { kind: "deposit" | "withdraw" }) {
   const [busy, setBusy] = useState(false);
 
   const active = methods.find((m) => m.id === method) ?? methods[0]!;
-  const limits = limitsFor(country, active, currency);
+  const limits = limitsFor(country, active, activeCurrency);
+
+  const pickCountry = (code: string) => {
+    const next = countryByCode(code) ?? home;
+    setCountryCode(next.code);
+    setPayCurrency(next.currency);
+    setMethod(methodsFor(next, kind)[0]!.id);
+    setAmount("");
+  };
 
   const submit = async () => {
     const n = Number(amount);
@@ -77,7 +92,7 @@ function MoneyForm({ kind }: { kind: "deposit" | "withdraw" }) {
     }
     if (n < limits.min || n > limits.max) {
       toast.error(
-        `Amount must be between ${formatMoney(limits.min, currency)} and ${formatMoney(limits.max, currency)}`,
+        `Amount must be between ${formatMoney(limits.min, activeCurrency)} and ${formatMoney(limits.max, activeCurrency)}`,
       );
       return;
     }
@@ -89,11 +104,11 @@ function MoneyForm({ kind }: { kind: "deposit" | "withdraw" }) {
     setBusy(true);
     try {
       const run = kind === "deposit" ? deposit : withdraw;
-      await run({ amount: n, method: active.id, msisdn, currency });
+      await run({ amount: n, method: active.id, msisdn, currency: activeCurrency });
       toast.success(
         kind === "deposit"
           ? "Approve the prompt on your phone"
-          : `Withdrawal of ${formatMoney(n, currency)} sent for processing`,
+          : `Withdrawal of ${formatMoney(n, activeCurrency)} sent for processing`,
         { description: `${active.label} · ${country.flag} ${country.name}` },
       );
       setAmount("");
@@ -124,10 +139,39 @@ function MoneyForm({ kind }: { kind: "deposit" | "withdraw" }) {
             {country.flag} {country.name}
           </span>
           <span>
-            Min {formatMoney(limits.min, currency)} · Max {formatMoney(limits.max, currency)}
+            Min {formatMoney(limits.min, activeCurrency)} · Max {formatMoney(limits.max, activeCurrency)}
           </span>
         </div>
       </div>
+      <div className={`grid gap-2 ${payCurrencies.length > 1 ? "grid-cols-[minmax(0,1fr)_auto]" : "grid-cols-1"}`}>
+        <select
+          value={country.code}
+          onChange={(e) => pickCountry(e.target.value)}
+          aria-label="Payment country"
+          className={inputCls}
+        >
+          {PAY_COUNTRIES.map((c) => (
+            <option key={c.code} value={c.code}>
+              {c.flag} {c.name}
+            </option>
+          ))}
+        </select>
+        {payCurrencies.length > 1 && (
+          <select
+            value={activeCurrency}
+            onChange={(e) => setPayCurrency(e.target.value)}
+            aria-label="Payment currency"
+            className={`${inputCls} w-auto`}
+          >
+            {payCurrencies.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+        )}
+      </div>
+
       <div className="grid grid-cols-2 gap-2">
         {methods.map((m) => (
           <button
