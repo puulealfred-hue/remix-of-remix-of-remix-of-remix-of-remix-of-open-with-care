@@ -72,9 +72,10 @@ export const PAY_COUNTRIES: PayCountry[] = [
       { id: "Vodacom M-Pesa", label: "Vodacom M-Pesa", type: "mobile" },
       { id: "Halotel", label: "Halopesa", type: "mobile" },
     ],
-    // Provider rejects smaller Tanzanian collections: fee exceeds the amount.
-    minMobile: 3_000,
+    // Verified live against the provider: TZS collections start at 500.
+    minMobile: 500,
     maxMobile: 5_000_000,
+
   },
   {
     code: "RW",
