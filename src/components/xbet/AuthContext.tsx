@@ -431,16 +431,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               /* referral credit is best-effort */
             }
           }
-          await pushTransaction({
-            kind: "Bonus",
-            amount: SIGNUP_BONUS,
-            method: input.promo.trim() ? `Promo ${input.promo.trim()}` : "Sign-up bonus",
-            actorType: "user",
-            actorId: cred.user.uid,
-            actorName: record.name,
-            status: "completed",
-            reference: "Free bet bonus (non-withdrawable)",
-          });
+          // No sign-up credit: the welcome bonus is paid on the first deposit.
+
           void logActivity({
             actorType: "user",
             actorId: cred.user.uid,
