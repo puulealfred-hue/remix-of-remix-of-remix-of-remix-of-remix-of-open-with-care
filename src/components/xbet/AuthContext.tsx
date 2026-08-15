@@ -376,7 +376,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             country: input.country,
             currency: input.currency.replace(/.*\(([^)]+)\).*/, "$1"),
             balance: 0,
-            bonusBalance: SIGNUP_BONUS,
+            bonusBalance: 0,
             referralCode: referralCodeFor(phone),
             referredBy: input.promo.trim().toUpperCase() || "",
             referralCount: 0,
@@ -396,10 +396,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 at: now,
                 channel: "Notification",
                 title: "Welcome to BET PLUS+",
-                body: `Your UGX ${SIGNUP_BONUS} free bonus is ready. It can be used for bets — any winnings become withdrawable cash.`,
+                body: "Make your first deposit and we add a free bonus equal to the minimum deposit for your currency. It can be used as stake — any winnings become withdrawable cash.",
               },
             ],
           };
+
           await setDoc(doc(db, COL.users, cred.user.uid), record);
 
           // Real referral payout: the inviter is credited UGX 100 in bonus funds.
