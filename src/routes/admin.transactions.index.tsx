@@ -11,10 +11,21 @@ export const Route = createFileRoute("/admin/transactions/")({
 const kinds = ["all", "Deposit", "Withdrawal", "Bet", "Payout", "Bonus", "Commission", "Adjustment"] as const;
 
 function TransactionsPage() {
-  const { state, deleteTransaction, updateTransaction } = useAdmin();
+  // Transactions are an audit trail: read-only records. The only write action
+  // is clearing the whole log.
+  const { state, deleteTransaction } = useAdmin();
   const navigate = useNavigate();
   const [q, setQ] = useState("");
   const [kind, setKind] = useState<(typeof kinds)[number]>("all");
+
+  const clearAll = () => {
+    const ids = state.transactions.map((t) => t.id);
+    if (ids.length === 0) return;
+    if (!window.confirm(`Delete all ${ids.length} transaction records? This cannot be undone.`))
+      return;
+    for (const id of ids) deleteTransaction(id);
+    toast.success("All transaction records cleared");
+  };
 
   const list = useMemo(() => {
     const n = q.trim().toLowerCase();
@@ -40,26 +51,31 @@ function TransactionsPage() {
       <Panel
         title={`Transactions (${list.length})`}
         action={
-          <Btn
-            size="xs"
-            onClick={() =>
-              downloadCsv("transactions.csv", [
-                ["Ref", "When", "Actor", "Role", "Type", "Amount", "Method", "Status"],
-                ...list.map((t) => [
-                  t.reference,
-                  new Date(t.at).toISOString(),
-                  t.actorName,
-                  t.actorType,
-                  t.kind,
-                  t.amount,
-                  t.method,
-                  t.status,
-                ]),
-              ])
-            }
-          >
-            Export CSV
-          </Btn>
+          <div className="flex gap-1">
+            <Btn
+              size="xs"
+              onClick={() =>
+                downloadCsv("transactions.csv", [
+                  ["Ref", "When", "Actor", "Role", "Type", "Amount", "Method", "Status"],
+                  ...list.map((t) => [
+                    t.reference,
+                    new Date(t.at).toISOString(),
+                    t.actorName,
+                    t.actorType,
+                    t.kind,
+                    t.amount,
+                    t.method,
+                    t.status,
+                  ]),
+                ])
+              }
+            >
+              Export CSV
+            </Btn>
+            <Btn size="xs" tone="red" onClick={clearAll}>
+              Clear all
+            </Btn>
+          </div>
         }
       >
         <div className="mb-2 flex flex-wrap gap-2">
@@ -99,31 +115,13 @@ function TransactionsPage() {
                 </td>
                 <td className="px-2 py-1.5 text-xb-text-muted">{timeAgo(t.at)}</td>
                 <td className="px-2 py-1.5" onClick={(e) => e.stopPropagation()}>
-                  <div className="flex flex-wrap gap-1">
-                    <Btn size="xs" tone="green" onClick={() => updateTransaction(t.id, { status: "completed" })}>
-                      Approve
-                    </Btn>
-                    <Btn size="xs" tone="red" onClick={() => updateTransaction(t.id, { status: "failed" })}>
-                      Fail
-                    </Btn>
-                    <Btn
-                      size="xs"
-                      tone="ghost"
-                      onClick={() => {
-                        deleteTransaction(t.id);
-                        toast.success("Transaction deleted");
-                      }}
-                    >
-                      Delete
-                    </Btn>
-                    <Link
-                      to="/admin/transactions/$txId"
-                      params={{ txId: t.id }}
-                      className="rounded bg-xb-odds px-2 py-1 text-[10px] font-bold"
-                    >
-                      Open
-                    </Link>
-                  </div>
+                  <Link
+                    to="/admin/transactions/$txId"
+                    params={{ txId: t.id }}
+                    className="rounded bg-xb-odds px-2 py-1 text-[10px] font-bold"
+                  >
+                    View
+                  </Link>
                 </td>
               </tr>
             ))}

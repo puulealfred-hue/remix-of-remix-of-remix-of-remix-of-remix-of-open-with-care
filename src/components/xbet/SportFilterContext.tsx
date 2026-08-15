@@ -4,11 +4,18 @@ import type { MatchScope, Sport } from "@/lib/sports-types";
 type Filters = {
   sport: Sport;
   scope: MatchScope;
+  /** First selected league / country — kept for single-pick call sites. */
   leagueId: number | null;
   countryId: number | null;
+  /** Full multi-select selections. */
+  leagueIds: number[];
+  countryIds: number[];
   setSport: (s: Sport) => void;
   setScope: (s: MatchScope) => void;
   setLeague: (leagueId: number | null, countryId?: number | null) => void;
+  toggleLeague: (leagueId: number, countryId?: number | null) => void;
+  toggleCountry: (countryId: number) => void;
+  clearFilters: () => void;
 };
 
 const Ctx = createContext<Filters | null>(null);
@@ -24,32 +31,51 @@ export function SportFilterProvider({
 }) {
   const [sport, setSportState] = useState<Sport>(initialSport);
   const [scope, setScope] = useState<MatchScope>(initialScope);
-  const [leagueId, setLeagueId] = useState<number | null>(null);
-  const [countryId, setCountryId] = useState<number | null>(null);
+  const [leagueIds, setLeagueIds] = useState<number[]>([]);
+  const [countryIds, setCountryIds] = useState<number[]>([]);
 
-  const value = useMemo<Filters>(
-    () => ({
+  const value = useMemo<Filters>(() => {
+    // Picking any filter (league or country) should reveal the full fixture
+    // list with odds, not just today's games.
+    const widen = () => {
+      if (scope !== "results" && scope !== "live") setScope("upcoming");
+    };
+    const toggle = (list: number[], id: number) =>
+      list.includes(id) ? list.filter((x) => x !== id) : [...list, id];
+
+    return {
       sport,
       scope,
-      leagueId,
-      countryId,
+      leagueId: leagueIds[0] ?? null,
+      countryId: countryIds[0] ?? null,
+      leagueIds,
+      countryIds,
       setSport: (s) => {
         setSportState(s);
-        setLeagueId(null);
-        setCountryId(null);
+        setLeagueIds([]);
+        setCountryIds([]);
       },
       setScope,
       setLeague: (l, c = null) => {
-        setLeagueId(l);
-        setCountryId(c);
-        // Picking any filter (league or country) should reveal its full 3-month
-        // fixture list with odds, not just today's games.
-        if ((l || c) && scope !== "results" && scope !== "live") setScope("upcoming");
+        setLeagueIds(l ? [l] : []);
+        setCountryIds(c ? [c] : []);
+        if (l || c) widen();
       },
-
-    }),
-    [sport, scope, leagueId, countryId],
-  );
+      toggleLeague: (l, c = null) => {
+        setLeagueIds((prev) => toggle(prev, l));
+        if (c) setCountryIds((prev) => (prev.includes(c) ? prev : prev));
+        widen();
+      },
+      toggleCountry: (c) => {
+        setCountryIds((prev) => toggle(prev, c));
+        widen();
+      },
+      clearFilters: () => {
+        setLeagueIds([]);
+        setCountryIds([]);
+      },
+    };
+  }, [sport, scope, leagueIds, countryIds]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

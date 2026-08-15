@@ -5,7 +5,18 @@ import { toast } from "sonner";
 import { AccountMenu } from "./AccountMenu";
 import { BonusMenu } from "./BonusMenu";
 import { money, useAuth } from "./AuthContext";
-import { eatClock, eatFull, useServerTime } from "@/lib/server-time";
+import { useServerTime } from "@/lib/server-time";
+import {
+  DEFAULT_LOCALE,
+  SUPPORTED_COUNTRIES,
+  detectCountryCode,
+  localClock,
+  localFull,
+  localeFor,
+  setPreferredCountry,
+  type CountryLocale,
+} from "@/lib/site-country";
+import { countryByCode } from "@/lib/payments";
 
 const navItems = [
   { label: "SPORT", to: "/" },
@@ -23,6 +34,12 @@ export function Header() {
   const now = useServerTime();
   const [clockOpen, setClockOpen] = useState(false);
   const clockRef = useRef<HTMLDivElement | null>(null);
+  // Detected market drives the flag, clock timezone and wallet currency shown.
+  const [loc, setLoc] = useState<CountryLocale>(DEFAULT_LOCALE);
+
+  useEffect(() => {
+    setLoc(localeFor(countryByCode(detectCountryCode()) ?? DEFAULT_LOCALE.country));
+  }, []);
 
   const { user, balance, isAdmin, openLogin, openRegister } = useAuth();
 
@@ -87,49 +104,65 @@ export function Header() {
               onClick={() => setClockOpen((o) => !o)}
               aria-haspopup="true"
               aria-expanded={clockOpen}
-              aria-label="Time and language"
+              aria-label="Time and country"
               className="flex h-8 items-center gap-2 rounded bg-white/10 px-2 text-xs text-xb-on-dark transition-colors hover:bg-white/20"
             >
               <img
-                src="https://flagcdn.com/w40/ug.png"
-                alt="Uganda flag"
+                src={loc.flagUrl}
+                alt={`${loc.country.name} flag`}
                 className="h-4 w-6 rounded-sm object-cover"
                 loading="lazy"
               />
-              <span>{now ? eatClock(now) : "--:--"}</span>
+              <span>{now ? localClock(now, loc) : "--:--"}</span>
               <ChevronDown className="h-3 w-3" />
             </button>
 
             {clockOpen && (
-              <div className="absolute right-0 z-50 mt-2 w-[250px] overflow-hidden rounded-2xl border border-xb-line bg-xb-panel shadow-xl">
+              <div className="absolute right-0 z-50 mt-2 w-[260px] overflow-hidden rounded-2xl border border-xb-line bg-xb-panel shadow-xl">
                 <div className="flex items-center gap-2 bg-xb-header px-3 py-2">
                   <Globe className="h-3.5 w-3.5 text-xb-on-dark" />
-                  <span className="text-[12px] font-black text-xb-on-dark">TIME ZONE — EAT</span>
+                  <span className="text-[12px] font-black text-xb-on-dark">
+                    {loc.country.name.toUpperCase()} — {loc.tzLabel}
+                  </span>
                 </div>
                 <div className="px-3 py-2.5">
                   <p className="text-[11px] uppercase tracking-wide text-xb-text-muted">
-                    East Africa Time (UTC+3)
+                    {loc.tz.replace("_", " ")}
                   </p>
                   <p className="mt-0.5 text-[15px] font-black text-xb-text">
-                    {now ? `${eatClock(now)} EAT` : "Syncing…"}
+                    {now ? `${localClock(now, loc)} ${loc.tzLabel}` : "Syncing…"}
                   </p>
                   <p className="mt-0.5 text-[11px] text-xb-text-muted">
-                    {now ? eatFull(now) : "Fetching internet time"}
+                    {now ? localFull(now, loc) : "Fetching internet time"}
                   </p>
                   <p className="mt-2 text-[10.5px] leading-snug text-xb-text-muted">
-                    Synced with our servers, not your device clock. All kick-off times are shown in
-                    EAT.
+                    Wallet currency: <b className="text-xb-text">{loc.country.currency}</b> (
+                    {loc.country.currencyName}). Times are synced with our servers, not your device
+                    clock.
                   </p>
                 </div>
-                <button
-                  onClick={() => {
-                    setClockOpen(false);
-                    toast("Language", { description: "English (EN) selected." });
-                  }}
-                  className="w-full bg-xb-panel-alt px-3 py-2 text-left text-[11px] font-bold text-xb-text hover:bg-xb-odds"
-                >
-                  Language · English (EN)
-                </button>
+                <div className="grid grid-cols-2 gap-px bg-xb-line">
+                  {SUPPORTED_COUNTRIES.map((c) => (
+                    <button
+                      key={c.code}
+                      onClick={() => {
+                        setPreferredCountry(c.code);
+                        setLoc(localeFor(c));
+                        setClockOpen(false);
+                        toast(`${c.name} selected`, {
+                          description: `Prices and payments now show in ${c.currency}.`,
+                        });
+                      }}
+                      className={`px-2 py-1.5 text-left text-[11px] font-bold ${
+                        c.code === loc.country.code
+                          ? "bg-xb-blue text-xb-on-dark"
+                          : "bg-xb-panel-alt text-xb-text hover:bg-xb-odds"
+                      }`}
+                    >
+                      {c.flag} {c.name} · {c.currency}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
           </div>

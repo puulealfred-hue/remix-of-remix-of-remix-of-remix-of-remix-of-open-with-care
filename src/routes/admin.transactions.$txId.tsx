@@ -10,7 +10,7 @@ export const Route = createFileRoute("/admin/transactions/$txId")({
 function TxDetailPage() {
   const { txId } = Route.useParams();
   const navigate = useNavigate();
-  const { state, updateTransaction, deleteTransaction } = useAdmin();
+  const { state, deleteTransaction } = useAdmin();
   const tx = state.transactions.find((t) => t.id === txId);
 
   if (!tx) {
@@ -72,29 +72,24 @@ function TxDetailPage() {
         <Stat label="Role" value={tx.actorType} />
       </div>
 
-      <Panel title="Edit transaction">
+      <Panel title="Transaction record (read-only)">
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
           <Field label="Reference">
-            <input className={inputCls} value={tx.reference} onChange={(e) => updateTransaction(tx.id, { reference: e.target.value })} />
+            <p className={`${inputCls} truncate`}>{tx.reference}</p>
           </Field>
           <Field label="Amount">
-            <input type="number" className={inputCls} value={tx.amount} onChange={(e) => updateTransaction(tx.id, { amount: Number(e.target.value) })} />
+            <p className={inputCls}>{ugx(tx.amount)}</p>
           </Field>
           <Field label="Method">
-            <input className={inputCls} value={tx.method} onChange={(e) => updateTransaction(tx.id, { method: e.target.value })} />
+            <p className={inputCls}>{tx.method}</p>
           </Field>
           <Field label="Status">
-            <select
-              className={inputCls}
-              value={tx.status}
-              onChange={(e) => updateTransaction(tx.id, { status: e.target.value as typeof tx.status })}
-            >
-              <option value="completed">completed</option>
-              <option value="pending">pending</option>
-              <option value="failed">failed</option>
-            </select>
+            <p className={inputCls}>{tx.status}</p>
           </Field>
         </div>
+        <p className="mt-2 text-[11px] text-xb-text-muted">
+          Financial records cannot be edited. Use the transactions list to clear the whole log.
+        </p>
       </Panel>
     </div>
   );

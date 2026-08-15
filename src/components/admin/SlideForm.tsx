@@ -2,15 +2,25 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Btn, Field, inputCls } from "@/components/admin/ui";
+import { useAdmin } from "@/components/admin/AdminDataContext";
 import { matchesQuery } from "@/lib/sports-queries";
 import { ugDateTime } from "@/lib/time";
 import type { Slide } from "@/lib/admin-types";
 
-type Target = "none" | "lucky" | "aviator" | "slot" | "virtual" | "match" | "custom";
+type Target =
+  | "none"
+  | "lucky"
+  | "winner"
+  | "aviator"
+  | "slot"
+  | "virtual"
+  | "match"
+  | "custom";
 
 const TARGETS: { key: Target; label: string; to?: string }[] = [
   { key: "none", label: "No link" },
   { key: "lucky", label: "Lucky winner page", to: "/lucky-winner" },
+  { key: "winner", label: "A specific winner page" },
   { key: "aviator", label: "Aviator game", to: "/aviator" },
   { key: "slot", label: "Slots page", to: "/slot" },
   { key: "virtual", label: "Virtual games", to: "/virtual" },
@@ -26,8 +36,12 @@ export function SlideForm({ onPublish }: { onPublish: (slide: Slide) => void }) 
   const [target, setTarget] = useState<Target>("none");
   const [custom, setCustom] = useState("");
   const [matchId, setMatchId] = useState("");
+  const [winnerId, setWinnerId] = useState("");
   const [sport, setSport] = useState<"football" | "basketball" | "tennis">("football");
   const [expires, setExpires] = useState("");
+
+  const { state } = useAdmin();
+  const winners = state.content.winners ?? [];
 
   const matches = useQuery({
     ...matchesQuery({ sport, scope: "upcoming" }),
@@ -39,8 +53,9 @@ export function SlideForm({ onPublish }: { onPublish: (slide: Slide) => void }) 
   const link = useMemo(() => {
     if (target === "custom") return custom.trim();
     if (target === "match") return matchId ? `/match/${matchId}?sport=${sport}` : "";
+    if (target === "winner") return winnerId ? `/winner/${winnerId}` : "";
     return TARGETS.find((t) => t.key === target)?.to ?? "";
-  }, [target, custom, matchId, sport]);
+  }, [target, custom, matchId, sport, winnerId]);
 
   return (
     <div className="grid gap-2 rounded-lg bg-xb-panel-alt p-2 sm:grid-cols-2">
@@ -79,6 +94,26 @@ export function SlideForm({ onPublish }: { onPublish: (slide: Slide) => void }) 
           ))}
         </select>
       </Field>
+
+      {target === "winner" && (
+        <Field label="Published winner">
+          <select
+            className={inputCls}
+            value={winnerId}
+            onChange={(e) => setWinnerId(e.target.value)}
+          >
+            <option value="">
+              {winners.length === 0 ? "No winners published yet" : "Select a winner"}
+            </option>
+            {winners.map((w) => (
+              <option key={w.id} value={w.id}>
+                {w.name} — {w.amount.toLocaleString()} ({w.location})
+              </option>
+            ))}
+          </select>
+        </Field>
+      )}
+
 
       {target === "custom" && (
         <Field label="Custom URL or path">
@@ -147,6 +182,10 @@ export function SlideForm({ onPublish }: { onPublish: (slide: Slide) => void }) 
               toast.error("Enter the custom URL");
               return;
             }
+            if (target === "winner" && !winnerId) {
+              toast.error("Pick the winner this slide should open");
+              return;
+            }
             const expiresAt = expires ? new Date(expires).getTime() : undefined;
             if (expires && Number.isNaN(expiresAt)) {
               toast.error("Invalid expiry date");
@@ -166,6 +205,7 @@ export function SlideForm({ onPublish }: { onPublish: (slide: Slide) => void }) 
             setTarget("none");
             setCustom("");
             setMatchId("");
+            setWinnerId("");
             setExpires("");
           }}
         >

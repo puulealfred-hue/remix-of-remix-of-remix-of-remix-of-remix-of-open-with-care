@@ -16,11 +16,11 @@ function isDesktop() {
 }
 
 export function ResultsBoard() {
-  const { sport, setSport, leagueId, countryId } = useSportFilters();
+  const { sport, setSport, leagueIds, countryIds } = useSportFilters();
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
 
-  const matches = useQuery(matchesQuery({ sport, scope: "results", leagueId, countryId }));
+  const matches = useQuery(matchesQuery({ sport, scope: "results", leagueIds, countryIds }));
 
   const visible = useMemo(() => {
     const list = matches.data ?? [];

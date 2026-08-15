@@ -1,7 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useAdmin } from "@/components/admin/AdminDataContext";
+import { TicketPreview } from "@/components/admin/TicketPreview";
+import { betToTicket } from "@/lib/bet-ticket";
 import { betOdds, betPayout } from "@/lib/admin-seed";
 import {
   BackLink,
@@ -26,6 +29,19 @@ function BetDetailPage() {
   const { state, setBetStatus, deleteBet, setMatchStatus, removeMatch, addMatch } = useAdmin();
   const bet = state.bets.find((b) => b.id === betId);
   const [leg, setLeg] = useState({ match: "", league: "", market: "1X2", pick: "Home", odds: 1.5 });
+  const betOwner = state.users.find((u) => u.id === bet?.userId);
+
+  // Same receipt payload the PDF export uses, so the admin sees exactly what
+  // the player's printed ticket looks like.
+  const ticket = useQuery({
+    queryKey: ["admin-ticket", betId, bet?.status, bet?.matches.map((m) => `${m.id}:${m.status}`).join(",")],
+    enabled: !!bet,
+    queryFn: () =>
+      betToTicket(bet!, {
+        name: betOwner?.name ?? "Player",
+        origin: typeof window === "undefined" ? "" : window.location.origin,
+      }),
+  });
 
   if (!bet) {
     return (
@@ -100,6 +116,37 @@ function BetDetailPage() {
           </div>
         ) : (
           <p className="text-[11px] text-xb-text-muted">Owner account has been deleted.</p>
+        )}
+      </Panel>
+
+      <Panel title="Ticket preview (as printed)">
+        {ticket.isPending && (
+          <p className="py-6 text-center text-[11px] text-xb-text-muted">Building receipt…</p>
+        )}
+        {ticket.data && (
+          <TicketPreview
+            ticket={ticket.data}
+            legControls={(i) => {
+              const m = bet.matches[i];
+              if (!m) return null;
+              return (
+                <>
+                  <Btn size="xs" tone="green" onClick={() => setMatchStatus(bet.id, m.id, "won")}>
+                    Won
+                  </Btn>
+                  <Btn size="xs" tone="red" onClick={() => setMatchStatus(bet.id, m.id, "lost")}>
+                    Lost
+                  </Btn>
+                  <Btn size="xs" onClick={() => setMatchStatus(bet.id, m.id, "void")}>
+                    Void
+                  </Btn>
+                  <Btn size="xs" tone="ghost" onClick={() => removeMatch(bet.id, m.id)}>
+                    Remove
+                  </Btn>
+                </>
+              );
+            }}
+          />
         )}
       </Panel>
 

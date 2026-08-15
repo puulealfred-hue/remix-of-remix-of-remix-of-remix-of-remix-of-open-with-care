@@ -13,19 +13,23 @@ export type MatchFilters = {
   scope: MatchScope;
   leagueId?: number | null;
   countryId?: number | null;
+  leagueIds?: number[] | null;
+  countryIds?: number[] | null;
 };
 
-export const matchesQuery = (f: MatchFilters) =>
-  queryOptions({
-    queryKey: ["matches", f.sport, f.scope, f.leagueId ?? null, f.countryId ?? null],
+export const matchesQuery = (f: MatchFilters) => {
+  const leagueIds = [...new Set([...(f.leagueIds ?? []), ...(f.leagueId ? [f.leagueId] : [])])].sort(
+    (a, b) => a - b,
+  );
+  const countryIds = [
+    ...new Set([...(f.countryIds ?? []), ...(f.countryId ? [f.countryId] : [])]),
+  ].sort((a, b) => a - b);
+
+  return queryOptions({
+    queryKey: ["matches", f.sport, f.scope, leagueIds.join(","), countryIds.join(",")],
     queryFn: () =>
       getMatches({
-        data: {
-          sport: f.sport,
-          scope: f.scope,
-          leagueId: f.leagueId ?? null,
-          countryId: f.countryId ?? null,
-        },
+        data: { sport: f.sport, scope: f.scope, leagueIds, countryIds },
       }),
     staleTime: f.scope === "live" ? 10_000 : 25_000,
     // Silent background updates: keep the current list on screen while refetching
@@ -35,6 +39,7 @@ export const matchesQuery = (f: MatchFilters) =>
     refetchOnWindowFocus: true,
     placeholderData: keepPreviousData,
   });
+};
 
 export const leaguesQuery = (sport: Sport) =>
   queryOptions({

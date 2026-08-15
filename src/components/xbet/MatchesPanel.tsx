@@ -14,6 +14,7 @@ import { LeagueFilterBar } from "./LeagueFilterBar";
 import { SPORTS, SPORT_LABELS, type MatchScope } from "@/lib/sports-types";
 import { ugDateKey, ugDateLabel, ugTime } from "@/lib/time";
 import { useFavorites } from "@/lib/favorites";
+import { marketsLocked, lockReason } from "@/lib/live-lock";
 
 const tabs: { key: MatchScope; label: string }[] = [
   { key: "live", label: "Live" },
@@ -81,11 +82,14 @@ function OddsButton({
   const { toggle, has } = useBetSlip();
   const flash = useOddsFlash(value);
   const id = `${match.id}-${label}`;
-  if (!value) {
+  // From the 80th minute the outcome is all but settled, so no market on that
+  // match can be backed any more.
+  const lateLocked = marketsLocked(match);
+  if (!value || lateLocked) {
     return (
       <span
-        title="Market not available"
-        aria-label="Odd not available"
+        title={lateLocked ? lockReason(match) : "Market not available"}
+        aria-label={lateLocked ? "Betting closed" : "Odd not available"}
         className="flex w-[74px] shrink-0 flex-col items-center justify-center rounded-md bg-xb-odds py-1.5 text-xb-text-muted opacity-70 md:w-[74px] md:py-2.5"
       >
         <span className="text-[10px] font-medium md:hidden">{shortLabel ?? label}</span>
@@ -129,21 +133,33 @@ function OddsButton({
 
 
 export function MatchesPanel() {
-  const { sport, setSport, scope, setScope, leagueId, countryId, setLeague } = useSportFilters();
+  const { sport, setSport, scope, setScope, leagueIds, countryIds, clearFilters } =
+    useSportFilters();
   const [query, setQuery] = useState("");
   const { isFavorite, toggleFavorite } = useFavorites();
 
-  const matches = useQuery(matchesQuery({ sport, scope, leagueId, countryId }));
+  const matches = useQuery(matchesQuery({ sport, scope, leagueIds, countryIds }));
   const leagues = useQuery(leaguesQuery(sport));
 
-  const activeLeague = (leagues.data ?? []).find((l) => l.key === leagueId);
+  const activeLabels = useMemo(() => {
+    const all = leagues.data ?? [];
+    const names = leagueIds
+      .map((id) => all.find((l) => l.key === id))
+      .filter(Boolean)
+      .map((l) => `${l!.country} · ${l!.name}`);
+    const countries = countryIds
+      .map((id) => all.find((l) => l.countryKey === id)?.country)
+      .filter(Boolean) as string[];
+    return [...names, ...[...new Set(countries)]];
+  }, [leagues.data, leagueIds, countryIds]);
+
   const isFootball = sport === "football";
   const marketCols = isFootball
     ? ["1", "X", "2", "Over 2.5", "Under 2.5", "GG", "NG"]
     : ["1", "2"];
 
 
-  const filtered = leagueId !== null || countryId !== null;
+  const filtered = leagueIds.length > 0 || countryIds.length > 0;
 
   const visible = useMemo(() => {
     let list = matches.data ?? [];
@@ -237,12 +253,13 @@ export function MatchesPanel() {
           {matches.isFetching && <span className="text-[11px]">Updating…</span>}
         </button>
         <div className="ml-auto hidden items-center gap-2 text-[12px] md:flex">
-          {activeLeague ? (
+          {activeLabels.length > 0 ? (
             <button
-              onClick={() => setLeague(null)}
+              onClick={clearFilters}
               className="rounded-full bg-xb-blue px-2 py-1 font-medium text-xb-on-dark"
             >
-              {activeLeague.country} · {activeLeague.name} ✕
+              {activeLabels.slice(0, 2).join(", ")}
+              {activeLabels.length > 2 ? ` +${activeLabels.length - 2}` : ""} ✕
             </button>
           ) : (
             <span className="text-xb-text-muted">All leagues</span>
@@ -251,6 +268,13 @@ export function MatchesPanel() {
       </div>
 
       <LeagueFilterBar />
+
+      {filtered && matches.isFetching && (
+        <div className="flex items-center justify-center gap-2 bg-xb-blue/10 px-3 py-3 text-[12px] font-bold text-xb-blue">
+          <RefreshCw className="h-4 w-4 animate-spin" />
+          Loading matches for your selected filters…
+        </div>
+      )}
 
 
 
