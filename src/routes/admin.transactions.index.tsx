@@ -51,26 +51,31 @@ function TransactionsPage() {
       <Panel
         title={`Transactions (${list.length})`}
         action={
-          <Btn
-            size="xs"
-            onClick={() =>
-              downloadCsv("transactions.csv", [
-                ["Ref", "When", "Actor", "Role", "Type", "Amount", "Method", "Status"],
-                ...list.map((t) => [
-                  t.reference,
-                  new Date(t.at).toISOString(),
-                  t.actorName,
-                  t.actorType,
-                  t.kind,
-                  t.amount,
-                  t.method,
-                  t.status,
-                ]),
-              ])
-            }
-          >
-            Export CSV
-          </Btn>
+          <div className="flex gap-1">
+            <Btn
+              size="xs"
+              onClick={() =>
+                downloadCsv("transactions.csv", [
+                  ["Ref", "When", "Actor", "Role", "Type", "Amount", "Method", "Status"],
+                  ...list.map((t) => [
+                    t.reference,
+                    new Date(t.at).toISOString(),
+                    t.actorName,
+                    t.actorType,
+                    t.kind,
+                    t.amount,
+                    t.method,
+                    t.status,
+                  ]),
+                ])
+              }
+            >
+              Export CSV
+            </Btn>
+            <Btn size="xs" tone="red" onClick={clearAll}>
+              Clear all
+            </Btn>
+          </div>
         }
       >
         <div className="mb-2 flex flex-wrap gap-2">
