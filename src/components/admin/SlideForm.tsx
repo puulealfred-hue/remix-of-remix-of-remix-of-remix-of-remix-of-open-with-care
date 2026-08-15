@@ -205,6 +205,7 @@ export function SlideForm({ onPublish }: { onPublish: (slide: Slide) => void }) 
             setTarget("none");
             setCustom("");
             setMatchId("");
+            setWinnerId("");
             setExpires("");
           }}
         >
