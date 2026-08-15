@@ -237,12 +237,13 @@ export function MatchesPanel() {
           {matches.isFetching && <span className="text-[11px]">Updating…</span>}
         </button>
         <div className="ml-auto hidden items-center gap-2 text-[12px] md:flex">
-          {activeLeague ? (
+          {activeLabels.length > 0 ? (
             <button
-              onClick={() => setLeague(null)}
+              onClick={clearFilters}
               className="rounded-full bg-xb-blue px-2 py-1 font-medium text-xb-on-dark"
             >
-              {activeLeague.country} · {activeLeague.name} ✕
+              {activeLabels.slice(0, 2).join(", ")}
+              {activeLabels.length > 2 ? ` +${activeLabels.length - 2}` : ""} ✕
             </button>
           ) : (
             <span className="text-xb-text-muted">All leagues</span>
@@ -251,6 +252,13 @@ export function MatchesPanel() {
       </div>
 
       <LeagueFilterBar />
+
+      {filtered && matches.isFetching && (
+        <div className="flex items-center justify-center gap-2 bg-xb-blue/10 px-3 py-3 text-[12px] font-bold text-xb-blue">
+          <RefreshCw className="h-4 w-4 animate-spin" />
+          Loading matches for your selected filters…
+        </div>
+      )}
 
 
 
