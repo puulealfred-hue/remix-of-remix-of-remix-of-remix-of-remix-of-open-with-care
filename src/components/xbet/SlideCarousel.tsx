@@ -79,7 +79,9 @@ export function SlideCarousel({
   const dot = i % slides.length;
 
   return (
-    <div className={`relative ${heightClass} overflow-hidden rounded-none sm:rounded-2xl bg-black font-xb shadow-sm`}>
+    <div
+      className={`relative ${heightClass} overflow-hidden rounded-none sm:rounded-2xl bg-black font-xb shadow-sm`}
+    >
       <div
         className={`flex h-full w-full ${animate ? "transition-transform duration-700 ease-[cubic-bezier(0.4,0,0.2,1)]" : ""}`}
         style={{ transform: `translateX(-${i * 100}%)` }}
@@ -98,7 +100,11 @@ export function SlideCarousel({
           return (
             <div key={`${s.id}-${idx}`} className="h-full w-full shrink-0 grow-0 basis-full">
               {s.link ? (
-                <a href={s.link} className="block h-full w-full" aria-label={s.title || "Promotion"}>
+                <a
+                  href={s.link}
+                  className="block h-full w-full"
+                  aria-label={s.title || "Promotion"}
+                >
                   {image}
                 </a>
               ) : (
