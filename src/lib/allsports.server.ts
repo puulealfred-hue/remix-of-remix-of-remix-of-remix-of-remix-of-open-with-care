@@ -393,16 +393,42 @@ export type MatchQuery = {
   scope: MatchScope;
   leagueId?: number | null;
   countryId?: number | null;
+  /** Multi-select filters — every selected league / country is fetched and merged. */
+  leagueIds?: number[] | null;
+  countryIds?: number[] | null;
 };
+
+/** Run promises with a small concurrency limit so the provider isn't flooded. */
+async function pool<T>(items: T[], limit: number, run: (item: T) => Promise<void>) {
+  let i = 0;
+  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (i < items.length) {
+      const item = items[i++]!;
+      await run(item);
+    }
+  });
+  await Promise.all(workers);
+}
 
 export async function fetchMatches(q: MatchQuery): Promise<Match[]> {
   const { sport, scope } = q;
-  const filters: Record<string, string> = {};
-  if (q.leagueId) filters["leagueId"] = String(q.leagueId);
-  if (q.countryId) filters["countryId"] = String(q.countryId);
+
+  const uniq = (list: Array<number | null | undefined>) => [
+    ...new Set(list.map((n) => Number(n)).filter((n) => Number.isFinite(n) && n > 0)),
+  ];
+  const leagueIds = uniq([...(q.leagueIds ?? []), q.leagueId]);
+  const countryIds = uniq([...(q.countryIds ?? []), q.countryId]);
+
+  // One provider request per selected league / country, merged into one list.
+  const variants: Array<Record<string, string>> = [
+    ...leagueIds.map((id) => ({ leagueId: String(id) })),
+    ...countryIds.map((id) => ({ countryId: String(id) })),
+  ];
+  if (variants.length === 0) variants.push({});
+  const hasFilter = leagueIds.length > 0 || countryIds.length > 0;
 
   // The provider rejects wide date windows (>~2 weeks), so request narrow
-  // chunks and merge them — this lets Upcoming reach 3 months ahead.
+  // chunks and merge them — this lets Upcoming reach months ahead.
   const chunks = (days: number, size: number) => {
     const out: Array<{ from: string; to: string }> = [];
     for (let start = 0; start <= days; start += size + 1) {
@@ -415,23 +441,32 @@ export async function fetchMatches(q: MatchQuery): Promise<Match[]> {
     scope === "today" || scope === "live" || scope === "boosted"
       ? [{ from: ymd(0), to: ymd(0) }]
       : scope === "upcoming" || scope === "topbets"
-        ? chunks(90, 12)
-        : [{ from: ymd(-7), to: ymd(0) }];
+        ? // A filtered list must show everything the competition has scheduled,
+          // however far out that is.
+          chunks(hasFilter ? 240 : 90, 12)
+        : [{ from: ymd(hasFilter ? -60 : -7), to: ymd(0) }];
 
-  const [rowChunks, oddChunks] = await Promise.all([
-    scope === "live"
-      ? call<Json[]>(sport, { met: "Livescore", ...filters }, 20_000).then((r) => [r])
-      : Promise.all(
-          ranges.map((range) =>
-            call<Json[]>(sport, { met: "Fixtures", ...range, ...filters }, 3 * 60_000),
-          ),
-        ),
-    Promise.all(ranges.map((range) => fetchOdds(sport, { ...range, ...filters }))),
-  ]);
+  const combos = variants.flatMap((v) => ranges.map((range) => ({ ...v, ...range })));
 
-  const rows = rowChunks.flatMap((r) => r ?? []);
+  const rows: Json[] = [];
   const odds = new Map<string, Market[]>();
-  for (const m of oddChunks) for (const [k, v] of m) odds.set(k, v);
+
+  if (scope === "live") {
+    await pool(variants, 4, async (v) => {
+      const r = await call<Json[]>(sport, { met: "Livescore", ...v }, 20_000);
+      rows.push(...(r ?? []));
+    });
+  } else {
+    await pool(combos, 5, async (c) => {
+      const r = await call<Json[]>(sport, { met: "Fixtures", ...c }, 3 * 60_000);
+      rows.push(...(r ?? []));
+    });
+  }
+
+  await pool(combos, 5, async (c) => {
+    const m = await fetchOdds(sport, c);
+    for (const [k, v] of m) odds.set(k, v);
+  });
 
 
   const list = [
