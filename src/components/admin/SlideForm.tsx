@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Btn, Field, inputCls } from "@/components/admin/ui";
+import { useAdmin } from "@/components/admin/AdminDataContext";
 import { matchesQuery } from "@/lib/sports-queries";
 import { ugDateTime } from "@/lib/time";
 import type { Slide } from "@/lib/admin-types";
