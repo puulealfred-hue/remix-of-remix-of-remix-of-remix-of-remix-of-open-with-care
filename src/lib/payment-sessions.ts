@@ -155,7 +155,20 @@ export async function settlePaymentSession(
       status: "completed",
       reference: session.reference,
     });
+    if (firstDepositBonus > 0) {
+      await pushTransaction({
+        kind: "Bonus",
+        amount: firstDepositBonus,
+        method: `First deposit bonus · ${session.currency}`,
+        actorType: "user",
+        actorId: session.userId,
+        actorName: session.userName,
+        status: "completed",
+        reference: `${session.reference}-BONUS`,
+      });
+    }
   } else {
+
     await pushTransaction({
       kind: session.kind === "deposit" ? "Deposit" : "Withdrawal",
       amount: 0,
