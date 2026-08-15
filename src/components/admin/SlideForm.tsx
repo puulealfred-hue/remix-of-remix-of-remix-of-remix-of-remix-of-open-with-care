@@ -35,8 +35,12 @@ export function SlideForm({ onPublish }: { onPublish: (slide: Slide) => void }) 
   const [target, setTarget] = useState<Target>("none");
   const [custom, setCustom] = useState("");
   const [matchId, setMatchId] = useState("");
+  const [winnerId, setWinnerId] = useState("");
   const [sport, setSport] = useState<"football" | "basketball" | "tennis">("football");
   const [expires, setExpires] = useState("");
+
+  const { state } = useAdmin();
+  const winners = state.content.winners ?? [];
 
   const matches = useQuery({
     ...matchesQuery({ sport, scope: "upcoming" }),
@@ -48,8 +52,9 @@ export function SlideForm({ onPublish }: { onPublish: (slide: Slide) => void }) 
   const link = useMemo(() => {
     if (target === "custom") return custom.trim();
     if (target === "match") return matchId ? `/match/${matchId}?sport=${sport}` : "";
+    if (target === "winner") return winnerId ? `/winner/${winnerId}` : "";
     return TARGETS.find((t) => t.key === target)?.to ?? "";
-  }, [target, custom, matchId, sport]);
+  }, [target, custom, matchId, sport, winnerId]);
 
   return (
     <div className="grid gap-2 rounded-lg bg-xb-panel-alt p-2 sm:grid-cols-2">
