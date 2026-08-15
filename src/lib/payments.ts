@@ -160,10 +160,25 @@ export function limitsFor(country: PayCountry, method: PayMethod, currency?: str
   return { min: country.minMobile, max: country.maxMobile };
 }
 
+/**
+ * Smallest deposit the provider accepts in a currency — this exact amount is
+ * also the non-withdrawable welcome bonus paid on a player's first deposit.
+ * Values verified live against the payment provider.
+ */
+export function minDepositFor(currency: string | undefined | null): number {
+  const cur = String(currency ?? "").toUpperCase();
+  const country = PAY_COUNTRIES.find((c) => c.currency === cur);
+  if (country) return country.minMobile;
+  const alt = PAY_COUNTRIES.find((c) => c.altCurrency?.currency === cur);
+  if (alt?.altCurrency) return alt.altCurrency.min;
+  return DEFAULT_COUNTRY.minMobile;
+}
+
 export function formatMoney(amount: number, currency = "UGX"): string {
   const n = Number.isFinite(amount) ? amount : 0;
   return `${currency} ${n.toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
 }
+
 
 /* ------------------------------------------------------------------ */
 /* IP geolocation (free, key-less, with fallback)                      */
