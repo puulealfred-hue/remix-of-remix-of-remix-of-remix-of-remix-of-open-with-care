@@ -242,7 +242,16 @@ async function call<T = Record<string, unknown>>(
   } catch {
     data = {};
   }
+  // The backend wraps the provider's real reason inside `details` — surface it
+  // so players see "Visa is disabled…" instead of "Relworx request failed".
+  const details = data["details"];
+  if (details && typeof details === "object") {
+    const inner = details as Record<string, unknown>;
+    const reason = inner["message"] ?? inner["error"];
+    if (reason) data = { ...data, message: String(reason) };
+  }
   return { ok: res.ok, status: res.status, data: data as ApiResult<T>["data"] };
+
 }
 
 export type PayRequestResponse = {
