@@ -11,10 +11,21 @@ export const Route = createFileRoute("/admin/transactions/")({
 const kinds = ["all", "Deposit", "Withdrawal", "Bet", "Payout", "Bonus", "Commission", "Adjustment"] as const;
 
 function TransactionsPage() {
-  const { state, deleteTransaction, updateTransaction } = useAdmin();
+  // Transactions are an audit trail: read-only records. The only write action
+  // is clearing the whole log.
+  const { state, deleteTransaction } = useAdmin();
   const navigate = useNavigate();
   const [q, setQ] = useState("");
   const [kind, setKind] = useState<(typeof kinds)[number]>("all");
+
+  const clearAll = () => {
+    const ids = state.transactions.map((t) => t.id);
+    if (ids.length === 0) return;
+    if (!window.confirm(`Delete all ${ids.length} transaction records? This cannot be undone.`))
+      return;
+    for (const id of ids) deleteTransaction(id);
+    toast.success("All transaction records cleared");
+  };
 
   const list = useMemo(() => {
     const n = q.trim().toLowerCase();
