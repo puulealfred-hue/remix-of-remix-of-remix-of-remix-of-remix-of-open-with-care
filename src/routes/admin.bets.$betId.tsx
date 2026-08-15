@@ -1,7 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useAdmin } from "@/components/admin/AdminDataContext";
+import { TicketPreview } from "@/components/admin/TicketPreview";
+import { betToTicket } from "@/lib/bet-ticket";
 import { betOdds, betPayout } from "@/lib/admin-seed";
 import {
   BackLink,
