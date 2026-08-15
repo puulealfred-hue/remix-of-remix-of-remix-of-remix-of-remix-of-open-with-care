@@ -99,31 +99,13 @@ function TransactionsPage() {
                 </td>
                 <td className="px-2 py-1.5 text-xb-text-muted">{timeAgo(t.at)}</td>
                 <td className="px-2 py-1.5" onClick={(e) => e.stopPropagation()}>
-                  <div className="flex flex-wrap gap-1">
-                    <Btn size="xs" tone="green" onClick={() => updateTransaction(t.id, { status: "completed" })}>
-                      Approve
-                    </Btn>
-                    <Btn size="xs" tone="red" onClick={() => updateTransaction(t.id, { status: "failed" })}>
-                      Fail
-                    </Btn>
-                    <Btn
-                      size="xs"
-                      tone="ghost"
-                      onClick={() => {
-                        deleteTransaction(t.id);
-                        toast.success("Transaction deleted");
-                      }}
-                    >
-                      Delete
-                    </Btn>
-                    <Link
-                      to="/admin/transactions/$txId"
-                      params={{ txId: t.id }}
-                      className="rounded bg-xb-odds px-2 py-1 text-[10px] font-bold"
-                    >
-                      Open
-                    </Link>
-                  </div>
+                  <Link
+                    to="/admin/transactions/$txId"
+                    params={{ txId: t.id }}
+                    className="rounded bg-xb-odds px-2 py-1 text-[10px] font-bold"
+                  >
+                    View
+                  </Link>
                 </td>
               </tr>
             ))}
