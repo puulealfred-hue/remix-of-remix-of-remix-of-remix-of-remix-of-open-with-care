@@ -95,6 +95,26 @@ export function SlideForm({ onPublish }: { onPublish: (slide: Slide) => void }) 
         </select>
       </Field>
 
+      {target === "winner" && (
+        <Field label="Published winner">
+          <select
+            className={inputCls}
+            value={winnerId}
+            onChange={(e) => setWinnerId(e.target.value)}
+          >
+            <option value="">
+              {winners.length === 0 ? "No winners published yet" : "Select a winner"}
+            </option>
+            {winners.map((w) => (
+              <option key={w.id} value={w.id}>
+                {w.name} — {w.amount.toLocaleString()} ({w.location})
+              </option>
+            ))}
+          </select>
+        </Field>
+      )}
+
+
       {target === "custom" && (
         <Field label="Custom URL or path">
           <input
