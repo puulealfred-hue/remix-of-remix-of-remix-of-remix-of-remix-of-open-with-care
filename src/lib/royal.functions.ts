@@ -20,8 +20,19 @@ export const createRoyalLaunch = createServerFn({ method: "POST" })
     const operatorId = process.env["ROYAL_OPERATOR_ID"] || ROYAL.operatorId;
     const secret = process.env["ROYAL_API_SECRET"] || ROYAL.secret;
 
-    const origin = new URL(getRequest().url).origin;
+    // The game server calls our wallet API server-to-server, so it needs a
+    // publicly reachable origin. Sandboxed `id-preview--…` hosts redirect every
+    // request, which made every wallet call fail and the game never started;
+    // map them onto the stable `project--…-dev` host instead.
+    const requestOrigin = new URL(getRequest().url).origin;
+    const envOrigin = process.env["ROYAL_WALLET_ORIGIN"];
+    const stable = requestOrigin.replace(
+      /^https:\/\/id-preview--([0-9a-f-]+)\.lovable\.app$/i,
+      "https://project--$1-dev.lovable.app",
+    );
+    const origin = (envOrigin || stable).replace(/\/$/, "");
     const walletUrl = `${origin}${ROYAL.walletPath}`;
+
 
     const body = JSON.stringify({
       operatorId,
