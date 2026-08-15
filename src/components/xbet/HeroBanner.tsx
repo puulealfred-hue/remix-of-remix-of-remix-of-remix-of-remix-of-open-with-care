@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { Link } from "@tanstack/react-router";
 import aresPoster from "@/assets/sword-of-ares.jpg";
 import aviatorPoster from "@/assets/aviator-poster.jpg";
+import royalPoster from "@/assets/royal-fortune.jpg";
 import { SlideCarousel } from "@/components/xbet/SlideCarousel";
 import { useSiteContent } from "@/components/admin/AdminDataContext";
 import { visibleSlides } from "@/lib/slides";
@@ -11,7 +12,9 @@ export function HeroBanner() {
   const { content, ready } = useSiteContent();
   const slides = useMemo(() => visibleSlides(content.heroSlides), [content.heroSlides]);
 
-  return <SlideCarousel slides={slides} ready={ready} heightClass="h-[150px] sm:h-[195px] md:h-[250px]" />;
+  return (
+    <SlideCarousel slides={slides} ready={ready} heightClass="h-[150px] sm:h-[195px] md:h-[250px]" />
+  );
 }
 
 const games = [
@@ -22,12 +25,19 @@ const games = [
     alt: "Sword of Ares slot game poster",
   },
   {
+    name: "Royal Fortune",
+    to: "/royal-fortune",
+    img: royalPoster,
+    alt: "Royal Fortune slot game poster with crowns and gems",
+  },
+  {
     name: "Aviator",
     to: "/aviator",
     img: aviatorPoster,
     alt: "Aviator crash game poster with a red propeller plane and rising multiplier curve",
   },
 ];
+
 
 export function GameTiles() {
   return (
