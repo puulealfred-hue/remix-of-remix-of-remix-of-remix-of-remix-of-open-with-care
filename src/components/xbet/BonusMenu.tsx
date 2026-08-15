@@ -67,10 +67,25 @@ function ReferralCard() {
 }
 
 export function BonusMenu() {
-
+  const { currency } = useAuth();
   const [open, setOpen] = useState(false);
-  const [claimed, setClaimed] = useState<string[]>(["signup"]);
+  const [claimed, setClaimed] = useState<string[]>([]);
   const rootRef = useRef<HTMLDivElement | null>(null);
+
+  // The welcome bonus equals the provider's minimum deposit for the player's
+  // currency and lands automatically on the first deposit.
+  const BONUSES = useMemo(
+    () => [
+      {
+        key: "first-deposit",
+        icon: Gift,
+        title: `First deposit bonus ${currency} ${money(minDepositFor(currency))}`,
+        body: "Credited automatically the first time you deposit. Use it as stake — winnings become withdrawable cash. The bonus itself cannot be withdrawn.",
+        cta: "Auto",
+      },
+    ],
+    [currency],
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -82,6 +97,7 @@ export function BonusMenu() {
   }, [open]);
 
   const pending = BONUSES.filter((b) => !claimed.includes(b.key)).length + 1;
+
 
   return (
     <div className="relative" ref={rootRef}>
