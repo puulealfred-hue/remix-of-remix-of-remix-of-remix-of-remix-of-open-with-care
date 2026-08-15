@@ -182,6 +182,10 @@ export function SlideForm({ onPublish }: { onPublish: (slide: Slide) => void }) 
               toast.error("Enter the custom URL");
               return;
             }
+            if (target === "winner" && !winnerId) {
+              toast.error("Pick the winner this slide should open");
+              return;
+            }
             const expiresAt = expires ? new Date(expires).getTime() : undefined;
             if (expires && Number.isNaN(expiresAt)) {
               toast.error("Invalid expiry date");
