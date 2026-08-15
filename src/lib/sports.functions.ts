@@ -8,6 +8,8 @@ export const getMatches = createServerFn({ method: "GET" })
       scope?: MatchScope;
       leagueId?: number | null;
       countryId?: number | null;
+      leagueIds?: number[] | null;
+      countryIds?: number[] | null;
     }) => data ?? {},
   )
   .handler(async ({ data }) => {
@@ -17,6 +19,8 @@ export const getMatches = createServerFn({ method: "GET" })
       scope: data.scope ?? "today",
       leagueId: data.leagueId ?? null,
       countryId: data.countryId ?? null,
+      leagueIds: data.leagueIds ?? null,
+      countryIds: data.countryIds ?? null,
     });
   });
 
