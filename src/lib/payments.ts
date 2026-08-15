@@ -72,7 +72,8 @@ export const PAY_COUNTRIES: PayCountry[] = [
       { id: "Vodacom M-Pesa", label: "Vodacom M-Pesa", type: "mobile" },
       { id: "Halotel", label: "Halopesa", type: "mobile" },
     ],
-    minMobile: 500,
+    // Provider rejects smaller Tanzanian collections: fee exceeds the amount.
+    minMobile: 3_000,
     maxMobile: 5_000_000,
   },
   {
@@ -131,9 +132,7 @@ export function countryByCurrency(cur: string | undefined | null): PayCountry | 
 export function countryFromPhone(phone: string): PayCountry | null {
   const digits = String(phone || "").replace(/\D/g, "");
   if (!digits) return null;
-  return (
-    PAY_COUNTRIES.find((c) => digits.startsWith(c.dial.replace("+", ""))) ?? null
-  );
+  return PAY_COUNTRIES.find((c) => digits.startsWith(c.dial.replace("+", ""))) ?? null;
 }
 
 /** Builds the +2567… MSISDN the provider expects from any local/international input. */
@@ -251,7 +250,6 @@ async function call<T = Record<string, unknown>>(
     if (reason) data = { ...data, message: String(reason) };
   }
   return { ok: res.ok, status: res.status, data: data as ApiResult<T>["data"] };
-
 }
 
 export type PayRequestResponse = {
@@ -347,9 +345,11 @@ export type ProviderTransaction = {
 };
 
 export function providerTransactions() {
-  return call<{ success?: boolean; transactions?: ProviderTransaction[]; data?: ProviderTransaction[] }>(
-    "/api/transactions",
-  );
+  return call<{
+    success?: boolean;
+    transactions?: ProviderTransaction[];
+    data?: ProviderTransaction[];
+  }>("/api/transactions");
 }
 
 /** Unique 8–36 char reference accepted by Relworx. */

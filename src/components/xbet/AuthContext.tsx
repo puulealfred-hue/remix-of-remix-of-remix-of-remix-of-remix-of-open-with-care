@@ -39,12 +39,7 @@ import {
   patchPaymentSession,
   settlePaymentSession,
 } from "@/lib/payment-sessions";
-import {
-  makeReference,
-  requestCardSession,
-  requestDeposit,
-  requestWithdraw,
-} from "@/lib/payments";
+import { makeReference, requestCardSession, requestDeposit, requestWithdraw } from "@/lib/payments";
 import type { AdminUser, Bet, BetMatch, Transaction } from "@/lib/admin-types";
 
 /** Everything a deposit or withdrawal needs from the UI. */
@@ -608,14 +603,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const me = requireUser();
         const target = rawBets.find((b) => b.id === id);
         if (!target) return;
-        if (target.status === "pending")
-          throw new Error("You can only remove settled tickets");
+        if (target.status === "pending") throw new Error("You can only remove settled tickets");
         const { db } = await firebase();
         await deleteDoc(doc(db, COL.bets, id));
         track("Deleted a ticket", target.code);
         void me;
       },
-
 
       addBet: async (bet) => {
         const me = requireUser();
@@ -730,7 +723,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         })();
       },
     };
-  }, [user, profile, cash, bonus, rawBets, transactions, modal, loading, busy, track, touchLastSeen]);
+  }, [
+    user,
+    profile,
+    cash,
+    bonus,
+    rawBets,
+    transactions,
+    modal,
+    loading,
+    busy,
+    track,
+    touchLastSeen,
+  ]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
