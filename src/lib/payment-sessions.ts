@@ -1,0 +1,156 @@
+import {
+  addDoc,
+  collection,
+  doc,
+  increment,
+  onSnapshot,
+  query,
+  runTransaction,
+  updateDoc,
+  where,
+} from "firebase/firestore";
+import { firebase } from "./firebase";
+import { COL, pushTransaction, siteDoc } from "./firestore-db";
+
+export const PAYMENT_SESSIONS = "payment_sessions";
+
+export type PaymentSession = {
+  id: string;
+  userId: string;
+  userName: string;
+  kind: "deposit" | "withdraw";
+  amount: number;
+  currency: string;
+  method: string;
+  msisdn: string;
+  reference: string;
+  internalReference: string;
+  status: "pending" | "success" | "failed";
+  /** True once the wallet effect (credit / refund) has been applied — never repeat. */
+  settled: boolean;
+  at: number;
+  updatedAt: number;
+  message?: string;
+};
+
+export async function createPaymentSession(
+  input: Omit<PaymentSession, "id" | "at" | "updatedAt" | "status" | "settled"> & {
+    status?: PaymentSession["status"];
+  },
+): Promise<string> {
+  const { db } = await firebase();
+  const now = Date.now();
+  const ref = await addDoc(collection(db, PAYMENT_SESSIONS), {
+    status: "pending" as const,
+    settled: false,
+    at: now,
+    updatedAt: now,
+    ...input,
+  });
+  return ref.id;
+}
+
+export async function patchPaymentSession(
+  id: string,
+  patch: Partial<PaymentSession>,
+): Promise<void> {
+  const { db } = await firebase();
+  await updateDoc(doc(db, PAYMENT_SESSIONS, id), { ...patch, updatedAt: Date.now() });
+}
+
+/** Live feed of the signed-in player's unfinished payment sessions. */
+export function watchPendingSessions(
+  userId: string,
+  cb: (sessions: PaymentSession[]) => void,
+): () => void {
+  let stop = () => {};
+  void firebase().then(({ db }) => {
+    stop = onSnapshot(
+      query(
+        collection(db, PAYMENT_SESSIONS),
+        where("userId", "==", userId),
+        where("settled", "==", false),
+      ),
+      (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as PaymentSession)),
+      () => cb([]),
+    );
+  });
+  return () => stop();
+}
+
+/**
+ * Applies the wallet effect of a finished payment exactly once.
+ * Deposits credit on success; withdrawals were held at request time and are
+ * refunded when the payout fails.
+ */
+export async function settlePaymentSession(
+  session: PaymentSession,
+  outcome: "success" | "failed",
+  message = "",
+): Promise<"applied" | "skipped"> {
+  const { db } = await firebase();
+  const sessionRef = doc(db, PAYMENT_SESSIONS, session.id);
+  const userRef = doc(db, COL.users, session.userId);
+
+  const applied = await runTransaction(db, async (tx) => {
+    const snap = await tx.get(sessionRef);
+    if (!snap.exists()) return false;
+    const current = snap.data() as PaymentSession;
+    if (current.settled) return false;
+
+    if (session.kind === "deposit" && outcome === "success") {
+      tx.update(userRef, {
+        balance: increment(session.amount),
+        totalIn: increment(session.amount),
+        lastSeen: Date.now(),
+      });
+    }
+    if (session.kind === "withdraw" && outcome === "failed") {
+      // Release the hold taken when the payout was requested.
+      tx.update(userRef, { balance: increment(session.amount) });
+    }
+    if (session.kind === "withdraw" && outcome === "success") {
+      tx.update(userRef, { totalOut: increment(session.amount) });
+    }
+
+    tx.update(sessionRef, {
+      status: outcome,
+      settled: true,
+      message,
+      updatedAt: Date.now(),
+    });
+    return true;
+  });
+
+  if (!applied) return "skipped";
+
+  const float = session.kind === "deposit" ? session.amount : -session.amount;
+  if (outcome === "success") {
+    await updateDoc(siteDoc(db, "wallet"), { siteFloat: increment(float) }).catch(() => undefined);
+  }
+
+  if (outcome === "success") {
+    await pushTransaction({
+      kind: session.kind === "deposit" ? "Deposit" : "Withdrawal",
+      amount: session.kind === "deposit" ? session.amount : -session.amount,
+      method: `${session.method} · ${session.currency}`,
+      actorType: "user",
+      actorId: session.userId,
+      actorName: session.userName,
+      status: "completed",
+      reference: session.reference,
+    });
+  } else {
+    await pushTransaction({
+      kind: session.kind === "deposit" ? "Deposit" : "Withdrawal",
+      amount: 0,
+      method: `${session.method} · ${session.currency}`,
+      actorType: "user",
+      actorId: session.userId,
+      actorName: session.userName,
+      status: "failed",
+      reference: session.reference,
+    });
+  }
+  return "applied";
+}
