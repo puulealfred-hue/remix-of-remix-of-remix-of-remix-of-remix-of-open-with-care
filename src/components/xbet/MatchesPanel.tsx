@@ -81,11 +81,14 @@ function OddsButton({
   const { toggle, has } = useBetSlip();
   const flash = useOddsFlash(value);
   const id = `${match.id}-${label}`;
-  if (!value) {
+  // From the 80th minute the outcome is all but settled, so no market on that
+  // match can be backed any more.
+  const lateLocked = marketsLocked(match);
+  if (!value || lateLocked) {
     return (
       <span
-        title="Market not available"
-        aria-label="Odd not available"
+        title={lateLocked ? lockReason(match) : "Market not available"}
+        aria-label={lateLocked ? "Betting closed" : "Odd not available"}
         className="flex w-[74px] shrink-0 flex-col items-center justify-center rounded-md bg-xb-odds py-1.5 text-xb-text-muted opacity-70 md:w-[74px] md:py-2.5"
       >
         <span className="text-[10px] font-medium md:hidden">{shortLabel ?? label}</span>
