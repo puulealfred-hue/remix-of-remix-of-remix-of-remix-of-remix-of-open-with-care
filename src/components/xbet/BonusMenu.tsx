@@ -1,17 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Gift, Users, ChevronRight, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
-import { REFERRAL_BONUS, SIGNUP_BONUS, money, useAuth } from "./AuthContext";
+import { REFERRAL_BONUS, money, useAuth } from "./AuthContext";
+import { minDepositFor } from "@/lib/payments";
 
-const BONUSES = [
-  {
-    key: "signup",
-    icon: Gift,
-    title: `Sign-up bonus UGX ${money(SIGNUP_BONUS)}`,
-    body: "Credited automatically when you create your account. Use it as stake — winnings become withdrawable cash.",
-    cta: "Claimed",
-  },
-] as const;
 
 /** Live referral card — real code, real payout of UGX 100 per friend. */
 function ReferralCard() {
