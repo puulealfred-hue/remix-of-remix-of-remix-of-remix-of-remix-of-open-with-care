@@ -26,6 +26,19 @@ function BetDetailPage() {
   const { state, setBetStatus, deleteBet, setMatchStatus, removeMatch, addMatch } = useAdmin();
   const bet = state.bets.find((b) => b.id === betId);
   const [leg, setLeg] = useState({ match: "", league: "", market: "1X2", pick: "Home", odds: 1.5 });
+  const betOwner = state.users.find((u) => u.id === bet?.userId);
+
+  // Same receipt payload the PDF export uses, so the admin sees exactly what
+  // the player's printed ticket looks like.
+  const ticket = useQuery({
+    queryKey: ["admin-ticket", betId, bet?.status, bet?.matches.map((m) => `${m.id}:${m.status}`).join(",")],
+    enabled: !!bet,
+    queryFn: () =>
+      betToTicket(bet!, {
+        name: betOwner?.name ?? "Player",
+        origin: typeof window === "undefined" ? "" : window.location.origin,
+      }),
+  });
 
   if (!bet) {
     return (
