@@ -129,21 +129,33 @@ function OddsButton({
 
 
 export function MatchesPanel() {
-  const { sport, setSport, scope, setScope, leagueId, countryId, setLeague } = useSportFilters();
+  const { sport, setSport, scope, setScope, leagueIds, countryIds, clearFilters } =
+    useSportFilters();
   const [query, setQuery] = useState("");
   const { isFavorite, toggleFavorite } = useFavorites();
 
-  const matches = useQuery(matchesQuery({ sport, scope, leagueId, countryId }));
+  const matches = useQuery(matchesQuery({ sport, scope, leagueIds, countryIds }));
   const leagues = useQuery(leaguesQuery(sport));
 
-  const activeLeague = (leagues.data ?? []).find((l) => l.key === leagueId);
+  const activeLabels = useMemo(() => {
+    const all = leagues.data ?? [];
+    const names = leagueIds
+      .map((id) => all.find((l) => l.key === id))
+      .filter(Boolean)
+      .map((l) => `${l!.country} · ${l!.name}`);
+    const countries = countryIds
+      .map((id) => all.find((l) => l.countryKey === id)?.country)
+      .filter(Boolean) as string[];
+    return [...names, ...[...new Set(countries)]];
+  }, [leagues.data, leagueIds, countryIds]);
+
   const isFootball = sport === "football";
   const marketCols = isFootball
     ? ["1", "X", "2", "Over 2.5", "Under 2.5", "GG", "NG"]
     : ["1", "2"];
 
 
-  const filtered = leagueId !== null || countryId !== null;
+  const filtered = leagueIds.length > 0 || countryIds.length > 0;
 
   const visible = useMemo(() => {
     let list = matches.data ?? [];
