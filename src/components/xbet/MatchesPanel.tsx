@@ -14,6 +14,7 @@ import { LeagueFilterBar } from "./LeagueFilterBar";
 import { SPORTS, SPORT_LABELS, type MatchScope } from "@/lib/sports-types";
 import { ugDateKey, ugDateLabel, ugTime } from "@/lib/time";
 import { useFavorites } from "@/lib/favorites";
+import { marketsLocked, lockReason } from "@/lib/live-lock";
 
 const tabs: { key: MatchScope; label: string }[] = [
   { key: "live", label: "Live" },
