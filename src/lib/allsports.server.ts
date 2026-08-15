@@ -554,34 +554,36 @@ export async function fetchMatches(q: MatchQuery): Promise<Match[]> {
     return scope === "results" ? kb.localeCompare(ka) : ka.localeCompare(kb);
   });
 
-  const page = sorted.slice(0, scope === "upcoming" || scope === "topbets" ? 2000 : 600);
+  const page = sorted.slice(
+    0,
+    hasFilter ? 5000 : scope === "upcoming" || scope === "topbets" ? 2000 : 600,
+  );
 
   // The bulk Odds feed skips some fixtures, so top up per match for the ones
   // that came back without any market at all. A filtered list is small, so we
   // can afford to chase many more of them.
   if (scope !== "results") {
-    const topUpCap = q.leagueId || q.countryId ? 150 : 40;
+    const topUpCap = hasFilter ? 400 : 120;
     const missing = page
       .map((f) => String(f["event_key"]))
       .filter((id) => !odds.has(id))
       .slice(0, topUpCap);
 
-    await Promise.all(
-      missing.map(async (id) => {
-        try {
-          const res = await call<Record<string, unknown>>(
-            sport,
-            { met: "Odds", matchId: id },
-            2 * 60_000,
-          );
-          const markets = parseOddsNode(sport, res?.[id] ?? null);
-          if (markets.length) odds.set(id, markets);
-        } catch {
-          /* optional */
-        }
-      }),
-    );
+    await pool(missing, 10, async (id) => {
+      try {
+        const res = await call<Record<string, unknown>>(
+          sport,
+          { met: "Odds", matchId: id },
+          2 * 60_000,
+        );
+        const markets = parseOddsNode(sport, res?.[id] ?? null);
+        if (markets.length) odds.set(id, markets);
+      } catch {
+        /* optional */
+      }
+    });
   }
+
 
   return page.map((f) => normalise(sport, f, odds.get(String(f["event_key"])) ?? []));
 }
