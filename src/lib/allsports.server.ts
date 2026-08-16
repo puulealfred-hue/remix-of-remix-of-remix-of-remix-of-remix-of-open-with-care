@@ -940,3 +940,182 @@ export async function fetchLeagueActivity(
     (a, b) => a.country.localeCompare(b.country) || b.matches - a.matches,
   );
 }
+
+/* ---------------- provider directory: countries, seasons, teams, players, scorers ---------------- */
+
+export type Country = { key: number; name: string; logo: string | null };
+
+/** All countries the provider covers for a sport (met=Countries). */
+export async function fetchCountries(sport: Sport): Promise<Country[]> {
+  const res = (await call<Json[]>(sport, { met: "Countries" }, 24 * 60 * 60_000)) ?? [];
+  return res
+    .map((c) => ({
+      key: Number(c["country_key"] ?? 0),
+      name: String(c["country_name"] ?? "").trim(),
+      logo: (c["country_logo"] as string | null) ?? null,
+    }))
+    .filter((c) => c.key && c.name)
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export type Season = { key: string; name: string; current: boolean };
+
+/** Seasons available for a competition (met=Seasons). */
+export async function fetchSeasons(sport: Sport, leagueKey: number): Promise<Season[]> {
+  if (!leagueKey) return [];
+  const res =
+    (await call<Json[]>(sport, { met: "Seasons", leagueId: String(leagueKey) }, 6 * 60 * 60_000)) ??
+    [];
+  return res.map((s) => ({
+    key: String(s["seasonKey"] ?? s["season_key"] ?? s["season"] ?? ""),
+    name: String(s["seasonName"] ?? s["season_name"] ?? s["season"] ?? ""),
+    current: String(s["seasonCurrent"] ?? s["current"] ?? "") === "1",
+  }));
+}
+
+export type SquadPlayer = {
+  key: number;
+  name: string;
+  number: string;
+  position: string;
+  age: string;
+  image: string | null;
+  goals: number;
+  assists: number;
+  yellow: number;
+  red: number;
+  matches: number;
+};
+
+export type Team = {
+  key: number;
+  name: string;
+  logo: string | null;
+  coach: string;
+  players: SquadPlayer[];
+};
+
+function toSquad(raw: unknown): SquadPlayer[] {
+  if (!Array.isArray(raw)) return [];
+  return (raw as Json[])
+    .map((p) => ({
+      key: Number(p["player_key"] ?? 0),
+      name: String(p["player_name"] ?? "").trim(),
+      number: String(p["player_number"] ?? ""),
+      position: String(p["player_type"] ?? p["player_position"] ?? ""),
+      age: String(p["player_age"] ?? ""),
+      image: (p["player_image"] as string | null) || null,
+      goals: Number(p["player_goals"] ?? 0) || 0,
+      assists: Number(p["player_assists"] ?? 0) || 0,
+      yellow: Number(p["player_yellow_cards"] ?? 0) || 0,
+      red: Number(p["player_red_cards"] ?? 0) || 0,
+      matches: Number(p["player_match_played"] ?? 0) || 0,
+    }))
+    .filter((p) => p.name);
+}
+
+/** Teams of a competition, one team, or a name search (met=Teams). */
+export async function fetchTeams(
+  sport: Sport,
+  q: { leagueKey?: number | null; teamKey?: number | null; search?: string | null },
+): Promise<Team[]> {
+  const params: Record<string, string> = { met: "Teams" };
+  if (q.teamKey) params["teamId"] = String(q.teamKey);
+  else if (q.leagueKey) params["leagueId"] = String(q.leagueKey);
+  else if (q.search) params["teamName"] = q.search;
+  else return [];
+
+  const res = (await call<Json[]>(sport, params, 30 * 60_000)) ?? [];
+  return res.map((t) => ({
+    key: Number(t["team_key"] ?? 0),
+    name: String(t["team_name"] ?? "").trim(),
+    logo: (t["team_logo"] as string | null) ?? null,
+    coach: String((Array.isArray(t["coaches"]) ? ((t["coaches"] as Json[])[0]?.["coach_name"] ?? "") : "")),
+    players: toSquad(t["players"]),
+  }));
+}
+
+export type PlayerRow = {
+  key: number;
+  name: string;
+  image: string | null;
+  team: string;
+  teamKey: number;
+  number: string;
+  position: string;
+  age: string;
+  matches: number;
+  goals: number;
+  assists: number;
+  yellow: number;
+  red: number;
+};
+
+/** Player search / player profile (met=Players). */
+export async function fetchPlayers(
+  sport: Sport,
+  q: { search?: string | null; playerKey?: number | null; teamKey?: number | null },
+): Promise<PlayerRow[]> {
+  const params: Record<string, string> = { met: "Players" };
+  if (q.playerKey) params["playerId"] = String(q.playerKey);
+  else if (q.teamKey) params["teamId"] = String(q.teamKey);
+  else if (q.search && q.search.trim().length >= 3) params["playerName"] = q.search.trim();
+  else return [];
+
+  const res = (await call<Json[]>(sport, params, 10 * 60_000)) ?? [];
+  return res
+    .map((p) => ({
+      key: Number(p["player_key"] ?? 0),
+      name: String(p["player_name"] ?? "").trim(),
+      image: (p["player_image"] as string | null) || null,
+      team: String(p["team_name"] ?? ""),
+      teamKey: Number(p["team_key"] ?? 0),
+      number: String(p["player_number"] ?? ""),
+      position: String(p["player_type"] ?? ""),
+      age: String(p["player_age"] ?? ""),
+      matches: Number(p["player_match_played"] ?? 0) || 0,
+      goals: Number(p["player_goals"] ?? 0) || 0,
+      assists: Number(p["player_assists"] ?? 0) || 0,
+      yellow: Number(p["player_yellow_cards"] ?? 0) || 0,
+      red: Number(p["player_red_cards"] ?? 0) || 0,
+    }))
+    .filter((p) => p.name);
+}
+
+export type TopScorer = {
+  place: number;
+  player: string;
+  playerKey: number;
+  team: string;
+  teamKey: number;
+  goals: number;
+  assists: number;
+};
+
+/** Competition top scorers (met=Topscorers). */
+export async function fetchTopScorers(sport: Sport, leagueKey: number): Promise<TopScorer[]> {
+  if (!leagueKey) return [];
+  const res =
+    (await call<Json[]>(sport, { met: "Topscorers", leagueId: String(leagueKey) }, 30 * 60_000)) ??
+    [];
+  return res
+    .map((s) => ({
+      place: Number(s["player_place"] ?? 0),
+      player: String(s["player_name"] ?? "").trim(),
+      playerKey: Number(s["player_key"] ?? 0),
+      team: String(s["team_name"] ?? ""),
+      teamKey: Number(s["team_key"] ?? 0),
+      goals: Number(s["goals"] ?? 0) || 0,
+      assists: Number(s["assists"] ?? 0) || 0,
+    }))
+    .filter((s) => s.player)
+    .sort((a, b) => b.goals - a.goals || a.place - b.place);
+}
+
+/** Public wrapper around the standings feed (met=Standings). */
+export async function fetchLeagueStandings(
+  sport: Sport,
+  leagueKey: number,
+): Promise<StandingRow[]> {
+  return fetchStandings(sport, leagueKey);
+}
