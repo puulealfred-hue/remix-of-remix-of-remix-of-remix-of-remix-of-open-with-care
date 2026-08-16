@@ -947,7 +947,26 @@ export async function fetchMatchDetails(sport: Sport, matchId: string): Promise<
     const prev = merged.get(mk.name);
     if (!prev || mk.outcomes.length > prev.outcomes.length) merged.set(mk.name, mk);
   }
+  // In-play prices (football live odds feed) override/extend the pre-match list.
+  const isLiveNow = String(fixture["event_live"] ?? "0") === "1";
+  if (isFootball && isLiveNow) {
+    const liveOdds = await call<Record<string, unknown>>(
+      sport,
+      { met: "OddsLive", matchId },
+      15_000,
+    ).catch(() => null);
+    const rows = Array.isArray(liveOdds?.[matchId]) ? (liveOdds[matchId] as Json[]) : [];
+    const coll: Collector = new Map();
+    for (const r of rows) {
+      if (String(r["is_odd_suspended"] ?? "") === "Yes") continue;
+      const hc = String(r["odd_participant_handicap"] ?? "").trim();
+      const name = `LIVE · ${String(r["odd_name"] ?? "Market")}${hc ? ` ${hc}` : ""}`;
+      add(coll, name, String(r["odd_type"] ?? "-"), r["odd_value"], "Live");
+    }
+    for (const mk of collect(coll)) merged.set(mk.name, mk);
+  }
   const markets = [...merged.values()];
+
   const lineupNode = fixture["lineups"];
   const hasLineups = lineupNode && typeof lineupNode === "object";
 
