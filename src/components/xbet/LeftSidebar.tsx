@@ -22,13 +22,16 @@ function CountryGroup({
   country,
   leagues,
   activeLeague,
+  counts,
   onPick,
 }: {
   country: string;
   leagues: League[];
   activeLeague: number | null;
+  counts: Map<number, number>;
   onPick: (l: League) => void;
 }) {
+
   const [open, setOpen] = useState(false);
   const first = leagues[0];
   return (
