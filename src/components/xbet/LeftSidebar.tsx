@@ -95,18 +95,46 @@ export function LeftSidebar() {
   const leagues = useQuery(leaguesQuery(sport));
   const counts = useQuery(liveCountsQuery());
   const top = useQuery(matchesQuery({ sport, scope: "live" }));
+  const activity = useQuery(leagueActivityQuery(sport, scope));
+
+  // Match counts per league for the current scope. Only competitions that
+  // actually have fixtures are listed.
+  const matchCounts = useMemo(() => {
+    const m = new Map<number, number>();
+    for (const a of activity.data ?? []) m.set(a.leagueKey, a.matches);
+    return m;
+  }, [activity.data]);
 
   const byCountry = useMemo(() => {
     const q = search.trim().toLowerCase();
+    const hasActivity = matchCounts.size > 0;
     const map = new Map<string, League[]>();
-    for (const l of leagues.data ?? []) {
+
+    // Fall back to the raw catalogue only while the activity feed is loading,
+    // so the sidebar is never empty on first paint.
+    const source: League[] = hasActivity
+      ? (activity.data ?? []).map((a) => ({
+          key: a.leagueKey,
+          name: a.league,
+          country: a.country,
+          countryKey: a.countryKey,
+          logo: a.leagueLogo,
+          countryLogo: a.countryLogo,
+          sport: a.sport,
+        }))
+      : (leagues.data ?? []);
+
+    for (const l of source) {
       if (q && !`${l.country} ${l.name}`.toLowerCase().includes(q)) continue;
       const list = map.get(l.country) ?? [];
       list.push(l);
       map.set(l.country, list);
     }
+    for (const list of map.values())
+      list.sort((a, b) => (matchCounts.get(b.key) ?? 0) - (matchCounts.get(a.key) ?? 0));
     return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]));
-  }, [leagues.data, search]);
+  }, [leagues.data, activity.data, matchCounts, search]);
+
 
   const liveList = top.data ?? [];
   const g = liveList[game % Math.max(liveList.length, 1)];
