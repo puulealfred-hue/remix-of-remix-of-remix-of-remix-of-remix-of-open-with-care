@@ -56,12 +56,16 @@ const ALL_TABS = [
   "Markets",
   "Summary",
   "Statistics",
+  "Box score",
+  "Probabilities",
+  "Commentary",
   "Lineups",
   "Videos",
   "Head to head",
   "Standings",
   "AI assistant",
 ] as const;
+
 type Tab = (typeof ALL_TABS)[number];
 
 function MatchPage() {
