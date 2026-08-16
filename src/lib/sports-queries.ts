@@ -37,7 +37,9 @@ export const matchesQuery = (f: MatchFilters) => {
     refetchInterval: f.scope === "live" ? 15_000 : 30_000,
     refetchIntervalInBackground: false,
     refetchOnWindowFocus: true,
-    placeholderData: keepPreviousData,
+    // No keepPreviousData here: when the filter changes the previous
+    // (unselected) list must disappear at once and the new selection loads
+    // behind a skeleton instead of lingering stale rows.
   });
 };
 
