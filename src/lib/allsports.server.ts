@@ -863,3 +863,80 @@ export async function fetchMatchDetails(sport: Sport, matchId: string): Promise<
   };
 }
 
+
+/* ---------------- league activity ---------------- */
+
+export type LeagueActivity = {
+  leagueKey: number;
+  league: string;
+  leagueLogo: string | null;
+  country: string;
+  countryKey: number;
+  countryLogo: string | null;
+  matches: number;
+  live: number;
+  sport: Sport;
+};
+
+/**
+ * Countries / leagues that actually have fixtures in the requested scope.
+ * Used by the sidebar and the countries landing page so no empty competition
+ * is ever listed.
+ */
+export async function fetchLeagueActivity(
+  sport: Sport,
+  scope: MatchScope = "today",
+): Promise<LeagueActivity[]> {
+  const rows: Json[] = [];
+
+  if (scope === "live") {
+    rows.push(...((await call<Json[]>(sport, { met: "Livescore" }, 20_000)) ?? []));
+  } else {
+    const ranges =
+      scope === "results"
+        ? [{ from: ymd(-7), to: ymd(0) }]
+        : scope === "today" || scope === "boosted"
+          ? [{ from: ymd(0), to: ymd(0) }]
+          : [
+              { from: ymd(0), to: ymd(6) },
+              { from: ymd(7), to: ymd(13) },
+              { from: ymd(14), to: ymd(20) },
+            ];
+    await pool(ranges, 3, async (r) => {
+      const res = await call<Json[]>(sport, { met: "Fixtures", ...r }, 5 * 60_000);
+      rows.push(...(res ?? []));
+    });
+  }
+
+  const map = new Map<number, LeagueActivity>();
+  const seen = new Set<string>();
+  for (const f of rows) {
+    const key = Number(f["league_key"] ?? 0);
+    if (!key) continue;
+    const eventKey = String(f["event_key"] ?? "");
+    if (eventKey && seen.has(eventKey)) continue;
+    if (eventKey) seen.add(eventKey);
+
+    let entry = map.get(key);
+    if (!entry) {
+      entry = {
+        leagueKey: key,
+        league: String(f["league_name"] ?? "").trim(),
+        leagueLogo: (f["league_logo"] as string | null) ?? null,
+        country: String(f["country_name"] ?? "").trim(),
+        countryKey: Number(f["country_key"] ?? 0),
+        countryLogo: (f["country_logo"] as string | null) ?? null,
+        matches: 0,
+        live: 0,
+        sport,
+      };
+      map.set(key, entry);
+    }
+    entry.matches += 1;
+    if (String(f["event_live"] ?? "0") === "1") entry.live += 1;
+  }
+
+  return [...map.values()].sort(
+    (a, b) => a.country.localeCompare(b.country) || b.matches - a.matches,
+  );
+}

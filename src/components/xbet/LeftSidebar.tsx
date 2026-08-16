@@ -13,7 +13,13 @@ import {
 import { useBetSlip } from "./BetSlipContext";
 import { useSportFilters } from "./SportFilterContext";
 import { LiveEventSkeleton, LeagueListSkeleton } from "./Skeletons";
-import { leaguesQuery, liveCountsQuery, matchesQuery, type League } from "@/lib/sports-queries";
+import {
+  leaguesQuery,
+  liveCountsQuery,
+  matchesQuery,
+  leagueActivityQuery,
+  type League,
+} from "@/lib/sports-queries";
 import { SPORTS, SPORT_LABELS, type Sport } from "@/lib/sports-types";
 import { useFavorites } from "@/lib/favorites";
 
@@ -22,13 +28,16 @@ function CountryGroup({
   country,
   leagues,
   activeLeague,
+  counts,
   onPick,
 }: {
   country: string;
   leagues: League[];
   activeLeague: number | null;
+  counts: Map<number, number>;
   onPick: (l: League) => void;
 }) {
+
   const [open, setOpen] = useState(false);
   const first = leagues[0];
   return (
@@ -67,7 +76,11 @@ function CountryGroup({
                 <span className="h-4 w-4 shrink-0 rounded-full bg-xb-odds-hover" />
               )}
               <span className="truncate">{l.name}</span>
+              <span className="ml-auto shrink-0 text-[10px] text-xb-text-muted">
+                {counts.get(l.key) ?? 0}
+              </span>
             </button>
+
           ))}
 
         </div>
@@ -88,18 +101,46 @@ export function LeftSidebar() {
   const leagues = useQuery(leaguesQuery(sport));
   const counts = useQuery(liveCountsQuery());
   const top = useQuery(matchesQuery({ sport, scope: "live" }));
+  const activity = useQuery(leagueActivityQuery(sport, scope));
+
+  // Match counts per league for the current scope. Only competitions that
+  // actually have fixtures are listed.
+  const matchCounts = useMemo(() => {
+    const m = new Map<number, number>();
+    for (const a of activity.data ?? []) m.set(a.leagueKey, a.matches);
+    return m;
+  }, [activity.data]);
 
   const byCountry = useMemo(() => {
     const q = search.trim().toLowerCase();
+    const hasActivity = matchCounts.size > 0;
     const map = new Map<string, League[]>();
-    for (const l of leagues.data ?? []) {
+
+    // Fall back to the raw catalogue only while the activity feed is loading,
+    // so the sidebar is never empty on first paint.
+    const source: League[] = hasActivity
+      ? (activity.data ?? []).map((a) => ({
+          key: a.leagueKey,
+          name: a.league,
+          country: a.country,
+          countryKey: a.countryKey,
+          logo: a.leagueLogo,
+          countryLogo: a.countryLogo,
+          sport: a.sport,
+        }))
+      : (leagues.data ?? []);
+
+    for (const l of source) {
       if (q && !`${l.country} ${l.name}`.toLowerCase().includes(q)) continue;
       const list = map.get(l.country) ?? [];
       list.push(l);
       map.set(l.country, list);
     }
+    for (const list of map.values())
+      list.sort((a, b) => (matchCounts.get(b.key) ?? 0) - (matchCounts.get(a.key) ?? 0));
     return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]));
-  }, [leagues.data, search]);
+  }, [leagues.data, activity.data, matchCounts, search]);
+
 
   const liveList = top.data ?? [];
   const g = liveList[game % Math.max(liveList.length, 1)];
@@ -319,8 +360,10 @@ export function LeftSidebar() {
 
       <div className="overflow-hidden rounded-b-xl bg-xb-panel shadow-sm">
         <div className="flex items-center justify-between border-b border-xb-line px-3 py-2 text-[12px] font-bold text-xb-blue">
-          <span>{(leagues.data ?? []).length} leagues</span>
-          <Globe className="h-4 w-4 text-xb-text-muted" />
+          <span>{byCountry.reduce((n, [, l]) => n + l.length, 0)} leagues with matches</span>
+          <Link to="/countries" className="flex items-center gap-1 hover:underline">
+            All countries <Globe className="h-4 w-4 text-xb-text-muted" />
+          </Link>
         </div>
 
         <div className="bg-xb-odds px-3 py-2 text-[13px] font-medium text-xb-text">Sports</div>
@@ -366,6 +409,7 @@ export function LeftSidebar() {
               country={country}
               leagues={list}
               activeLeague={leagueId}
+              counts={matchCounts}
               onPick={(l) => setLeague(l.key, l.countryKey || null)}
             />
           ))}

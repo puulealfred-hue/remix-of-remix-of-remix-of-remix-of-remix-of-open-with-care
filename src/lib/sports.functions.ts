@@ -67,3 +67,10 @@ export const generateAiBetSlip = createServerFn({ method: "POST" })
     const { generateBetSlip } = await import("./betslip-ai.server");
     return generateBetSlip(data);
   });
+
+export const getLeagueActivity = createServerFn({ method: "GET" })
+  .inputValidator((data: { sport?: Sport; scope?: MatchScope }) => data ?? {})
+  .handler(async ({ data }) => {
+    const { fetchLeagueActivity } = await import("./allsports.server");
+    return fetchLeagueActivity(data.sport ?? "football", data.scope ?? "today");
+  });

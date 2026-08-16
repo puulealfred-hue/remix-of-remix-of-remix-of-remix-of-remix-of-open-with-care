@@ -6,9 +6,20 @@ import { MatchesPanel } from "@/components/xbet/MatchesPanel";
 import { RightSidebar } from "@/components/xbet/RightSidebar";
 import { SportFilterProvider } from "@/components/xbet/SportFilterContext";
 import { MobileNav } from "@/components/xbet/MobileNav";
+import type { Sport } from "@/lib/sports-types";
 
+
+type HomeSearch = { sport: Sport; league: number; country: number };
 
 export const Route = createFileRoute("/")({
+  validateSearch: (search: Record<string, unknown>): Partial<HomeSearch> => {
+    const out: Partial<HomeSearch> = {};
+    const sport = search["sport"];
+    if (sport === "football" || sport === "basketball" || sport === "tennis") out.sport = sport;
+    if (Number(search["league"]) > 0) out.league = Number(search["league"]);
+    if (Number(search["country"]) > 0) out.country = Number(search["country"]);
+    return out;
+  },
   head: () => ({
     meta: [
       { title: "BET PLUS+ — Best Online Betting Site, Live Odds & Aviator" },
@@ -73,8 +84,14 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  const { sport, league, country } = Route.useSearch();
   return (
-    <SportFilterProvider>
+    <SportFilterProvider
+      initialSport={sport ?? "football"}
+      initialScope={league || country ? "upcoming" : "today"}
+      initialLeagueIds={league ? [league] : []}
+      initialCountryIds={country ? [country] : []}
+    >
       <div className="flex h-[100dvh] flex-col overflow-hidden bg-xb-page font-xb">
         <Header />
         <main className="flex min-h-0 flex-1 gap-2 overflow-hidden px-0 pt-1 md:px-2 md:pt-2">

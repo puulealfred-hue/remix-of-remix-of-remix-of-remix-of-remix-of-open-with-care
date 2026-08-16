@@ -24,15 +24,19 @@ export function SportFilterProvider({
   children,
   initialSport = "football",
   initialScope = "today",
+  initialLeagueIds = [],
+  initialCountryIds = [],
 }: {
   children: ReactNode;
   initialSport?: Sport;
   initialScope?: MatchScope;
+  initialLeagueIds?: number[];
+  initialCountryIds?: number[];
 }) {
   const [sport, setSportState] = useState<Sport>(initialSport);
   const [scope, setScope] = useState<MatchScope>(initialScope);
-  const [leagueIds, setLeagueIds] = useState<number[]>([]);
-  const [countryIds, setCountryIds] = useState<number[]>([]);
+  const [leagueIds, setLeagueIds] = useState<number[]>(initialLeagueIds);
+  const [countryIds, setCountryIds] = useState<number[]>(initialCountryIds);
 
   const value = useMemo<Filters>(() => {
     // Picking any filter (league or country) should reveal the full fixture

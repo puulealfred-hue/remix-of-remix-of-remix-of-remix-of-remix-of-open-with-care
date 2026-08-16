@@ -14,6 +14,7 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AviatorRouteImport } from './routes/aviator'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as CountriesRouteImport } from './routes/countries'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as LuckyWinnerRouteImport } from './routes/lucky-winner'
 import { Route as PartnershipRouteImport } from './routes/partnership'
@@ -75,6 +76,11 @@ const AviatorRoute = AviatorRouteImport.update({
 const ContactRoute = ContactRouteImport.update({
   id: '/contact',
   path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CountriesRoute = CountriesRouteImport.update({
+  id: '/countries',
+  path: '/countries',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FaqRoute = FaqRouteImport.update({
@@ -274,6 +280,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteWithChildren
   '/aviator': typeof AviatorRoute
   '/contact': typeof ContactRoute
+  '/countries': typeof CountriesRoute
   '/faq': typeof FaqRoute
   '/lucky-winner': typeof LuckyWinnerRoute
   '/partnership': typeof PartnershipRoute
@@ -317,6 +324,7 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/aviator': typeof AviatorRoute
   '/contact': typeof ContactRoute
+  '/countries': typeof CountriesRoute
   '/faq': typeof FaqRoute
   '/lucky-winner': typeof LuckyWinnerRoute
   '/partnership': typeof PartnershipRoute
@@ -362,6 +370,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/aviator': typeof AviatorRoute
   '/contact': typeof ContactRoute
+  '/countries': typeof CountriesRoute
   '/faq': typeof FaqRoute
   '/lucky-winner': typeof LuckyWinnerRoute
   '/partnership': typeof PartnershipRoute
@@ -408,6 +417,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/aviator'
     | '/contact'
+    | '/countries'
     | '/faq'
     | '/lucky-winner'
     | '/partnership'
@@ -451,6 +461,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/aviator'
     | '/contact'
+    | '/countries'
     | '/faq'
     | '/lucky-winner'
     | '/partnership'
@@ -495,6 +506,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/aviator'
     | '/contact'
+    | '/countries'
     | '/faq'
     | '/lucky-winner'
     | '/partnership'
@@ -540,6 +552,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRouteWithChildren
   AviatorRoute: typeof AviatorRoute
   ContactRoute: typeof ContactRoute
+  CountriesRoute: typeof CountriesRoute
   FaqRoute: typeof FaqRoute
   LuckyWinnerRoute: typeof LuckyWinnerRoute
   PartnershipRoute: typeof PartnershipRoute
@@ -596,6 +609,13 @@ declare module '@tanstack/react-router' {
       path: '/contact'
       fullPath: '/contact'
       preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/countries': {
+      id: '/countries'
+      path: '/countries'
+      fullPath: '/countries'
+      preLoaderRoute: typeof CountriesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/faq': {
@@ -910,6 +930,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRouteWithChildren,
   AviatorRoute: AviatorRoute,
   ContactRoute: ContactRoute,
+  CountriesRoute: CountriesRoute,
   FaqRoute: FaqRoute,
   LuckyWinnerRoute: LuckyWinnerRoute,
   PartnershipRoute: PartnershipRoute,
