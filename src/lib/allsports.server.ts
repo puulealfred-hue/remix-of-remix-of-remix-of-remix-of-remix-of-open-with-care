@@ -742,7 +742,7 @@ function toComments(raw: unknown, matchId: string): CommentRow[] {
     .map((c) => ({
       time: String(c["comments_time"] ?? ""),
       text: String(c["comments_text"] ?? ""),
-      info: String(c["comments_state_info"] ?? "" ?? ""),
+      info: String(c["comments_state_info"] ?? ""),
     }))
     .filter((c) => c.text)
     .reverse();
