@@ -19,9 +19,11 @@ import {
   matchDetailsQuery,
   type EventRow,
   type Market,
+  type MatchDetails,
   type MatchLineups,
   type VideoItem,
 } from "@/lib/sports-queries";
+
 
 import { askMatchAssistant } from "@/lib/sports.functions";
 import { SPORTS, type Sport } from "@/lib/sports-types";
