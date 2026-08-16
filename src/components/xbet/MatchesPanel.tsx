@@ -82,9 +82,9 @@ function OddsButton({
   const { toggle, has } = useBetSlip();
   const flash = useOddsFlash(value);
   const id = `${match.id}-${label}`;
-  // From the 80th minute the outcome is all but settled, so no market on that
-  // match can be backed any more.
-  const lateLocked = marketsLocked(match);
+  // From the 80th minute only the outcome the score has already settled (the
+  // leading team, or the draw when level) is locked — everything else stays open.
+  const lateLocked = outcomeLocked(match, label, label);
   if (!value || lateLocked) {
     return (
       <span
