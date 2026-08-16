@@ -556,20 +556,22 @@ export async function fetchMatches(q: MatchQuery): Promise<Match[]> {
 
   const page = sorted.slice(
     0,
-    hasFilter ? 5000 : scope === "upcoming" || scope === "topbets" ? 2000 : 600,
+    hasFilter ? 400 : scope === "upcoming" || scope === "topbets" ? 2000 : 600,
   );
 
   // The bulk Odds feed skips some fixtures, so top up per match for the ones
   // that came back without any market at all. A filtered list is small, so we
   // can afford to chase many more of them.
   if (scope !== "results") {
-    const topUpCap = hasFilter ? 400 : 120;
+    // A filtered list is capped small enough that every fixture without odds
+    // can be chased individually, so nothing renders with empty markets.
+    const topUpCap = hasFilter ? page.length : 200;
     const missing = page
       .map((f) => String(f["event_key"]))
       .filter((id) => !odds.has(id))
       .slice(0, topUpCap);
 
-    await pool(missing, 10, async (id) => {
+    await pool(missing, 14, async (id) => {
       try {
         const res = await call<Record<string, unknown>>(
           sport,

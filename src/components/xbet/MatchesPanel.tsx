@@ -14,7 +14,7 @@ import { LeagueFilterBar } from "./LeagueFilterBar";
 import { SPORTS, SPORT_LABELS, type MatchScope } from "@/lib/sports-types";
 import { ugDateKey, ugDateLabel, ugTime } from "@/lib/time";
 import { useFavorites } from "@/lib/favorites";
-import { marketsLocked, lockReason } from "@/lib/live-lock";
+import { outcomeLocked, lockReason } from "@/lib/live-lock";
 
 const tabs: { key: MatchScope; label: string }[] = [
   { key: "live", label: "Live" },
@@ -82,9 +82,9 @@ function OddsButton({
   const { toggle, has } = useBetSlip();
   const flash = useOddsFlash(value);
   const id = `${match.id}-${label}`;
-  // From the 80th minute the outcome is all but settled, so no market on that
-  // match can be backed any more.
-  const lateLocked = marketsLocked(match);
+  // From the 80th minute only the outcome the score has already settled (the
+  // leading team, or the draw when level) is locked — everything else stays open.
+  const lateLocked = outcomeLocked(match, label, label);
   if (!value || lateLocked) {
     return (
       <span
@@ -160,13 +160,15 @@ export function MatchesPanel() {
 
 
   const filtered = leagueIds.length > 0 || countryIds.length > 0;
+  // A new selection must never show the previous one's rows: while the fresh
+  // list loads we render the match skeleton instead of stale data.
+  const showSkeleton = matches.isPending || (matches.isFetching && !matches.data);
 
   const visible = useMemo(() => {
     let list = matches.data ?? [];
-    // Hide events with no odds at all (results keep showing final scores).
-    // When a league/country filter is active, show the complete fixture list —
-    // far-out fixtures often have no published odds yet and would vanish.
-    if (scope !== "results" && !filtered) {
+    // Hide events with no odds at all (results keep showing final scores) so
+    // every row on screen is actually bettable — filtered lists included.
+    if (scope !== "results") {
       list = list.filter((m) => {
         const o = m.odds ?? {};
         const values = isFootball
@@ -269,9 +271,8 @@ export function MatchesPanel() {
 
       <LeagueFilterBar />
 
-      {filtered && matches.isFetching && (
-        <div className="flex items-center justify-center gap-2 bg-xb-blue/10 px-3 py-3 text-[12px] font-bold text-xb-blue">
-          <RefreshCw className="h-4 w-4 animate-spin" />
+      {showSkeleton && filtered && (
+        <div className="border-b border-xb-line bg-xb-blue/10 px-3 py-2 text-[12px] font-bold text-xb-blue">
           Loading matches for your selected filters…
         </div>
       )}
@@ -299,7 +300,7 @@ export function MatchesPanel() {
         </div>
       )}
 
-      {matches.isPending && <MatchesListSkeleton cols={isFootball ? 7 : 2} />}
+      {showSkeleton && <MatchesListSkeleton groups={filtered ? 4 : 3} cols={isFootball ? 7 : 2} />}
 
 
 
@@ -313,13 +314,14 @@ export function MatchesPanel() {
         </div>
       )}
 
-      {!matches.isPending && !matches.isError && visible.length === 0 && (
+      {!showSkeleton && !matches.isError && visible.length === 0 && (
         <div className="px-3 py-10 text-center text-[13px] text-xb-text-muted">
           No {scope} {SPORT_LABELS[sport].toLowerCase()} events for the selected filters.
         </div>
       )}
 
-      {grouped.map(([groupKey, list]) => (
+      {!showSkeleton &&
+        grouped.map(([groupKey, list]) => (
         <div key={groupKey}>
           <div className="bg-xb-odds px-3 py-2">
             <div className="flex items-center gap-2">
@@ -469,7 +471,7 @@ export function MatchesPanel() {
             </div>
           ))}
         </div>
-      ))}
+        ))}
 
       <div className="flex items-center justify-between px-3 py-2 text-[11px] text-xb-text-muted">
         <span>Live data & bookmaker odds by AllSportsAPI</span>

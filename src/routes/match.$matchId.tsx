@@ -3,7 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation } from "@tanstack/react-query";
-import { ArrowLeft, ArrowUp, ArrowDown, Loader2, Play, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowUp, ArrowDown, Loader2, Lock, Play, Sparkles } from "lucide-react";
 import { Header } from "@/components/xbet/Header";
 import { LeftSidebar } from "@/components/xbet/LeftSidebar";
 import { RightSidebar } from "@/components/xbet/RightSidebar";
@@ -11,6 +11,7 @@ import { SportFilterProvider } from "@/components/xbet/SportFilterContext";
 import { MobileNav } from "@/components/xbet/MobileNav";
 import { MatchDetailSkeleton } from "@/components/xbet/Skeletons";
 import { ugDateTime } from "@/lib/time";
+import { outcomeLocked, lockReason, type LockableMatch } from "@/lib/live-lock";
 import { useOddsFlash, oddsFlashClass } from "@/lib/use-odds-flash";
 
 import { useBetSlip } from "@/components/xbet/BetSlipContext";
@@ -180,6 +181,7 @@ function MatchPage() {
               {activeTab === "Markets" && (
                 <MarketsTab
                   markets={d.markets}
+                  match={m}
                   event={`${m.home} — ${m.away}`}
                   matchId={matchId}
                   sport={m.sport}
@@ -257,6 +259,8 @@ function MarketOutcome({
   sport,
   league,
   kickoff,
+  locked,
+  lockedTitle,
 }: {
   event: string;
   market: string;
@@ -267,10 +271,24 @@ function MarketOutcome({
   sport?: string | undefined;
   league?: string | undefined;
   kickoff?: string | undefined;
+  locked?: boolean;
+  lockedTitle?: string;
 }) {
   const { toggle, has } = useBetSlip();
   const active = has(id);
   const flash = useOddsFlash(odd);
+  if (locked) {
+    return (
+      <span
+        title={lockedTitle}
+        aria-label="Betting closed for this outcome"
+        className="flex flex-col items-center gap-1 rounded-lg bg-xb-odds px-2 py-2 text-xb-text-muted opacity-70"
+      >
+        <span className="text-[11px] font-medium uppercase">{label}</span>
+        <Lock className="h-3.5 w-3.5" />
+      </span>
+    );
+  }
   return (
     <button
       onClick={() => toggle({ id, matchId, event, market, odd, sport, league, kickoff })}
@@ -296,6 +314,7 @@ function MarketOutcome({
 
 function MarketsTab({
   markets,
+  match,
   event,
   matchId,
   sport,
@@ -303,6 +322,7 @@ function MarketsTab({
   kickoff,
 }: {
   markets: Market[];
+  match: LockableMatch;
   event: string;
   matchId: string;
   sport?: string | undefined;
@@ -347,6 +367,8 @@ function MarketsTab({
                 market={`${mk.name} · ${o.label}`}
                 label={o.label}
                 odd={o.odd}
+                locked={outcomeLocked(match, mk.name, o.label)}
+                lockedTitle={lockReason(match)}
               />
             ))}
           </div>
