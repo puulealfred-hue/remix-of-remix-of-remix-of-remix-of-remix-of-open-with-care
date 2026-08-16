@@ -361,7 +361,9 @@ export function LeftSidebar() {
       <div className="overflow-hidden rounded-b-xl bg-xb-panel shadow-sm">
         <div className="flex items-center justify-between border-b border-xb-line px-3 py-2 text-[12px] font-bold text-xb-blue">
           <span>{byCountry.reduce((n, [, l]) => n + l.length, 0)} leagues with matches</span>
-          <Globe className="h-4 w-4 text-xb-text-muted" />
+          <Link to="/countries" className="flex items-center gap-1 hover:underline">
+            All countries <Globe className="h-4 w-4 text-xb-text-muted" />
+          </Link>
         </div>
 
         <div className="bg-xb-odds px-3 py-2 text-[13px] font-medium text-xb-text">Sports</div>
