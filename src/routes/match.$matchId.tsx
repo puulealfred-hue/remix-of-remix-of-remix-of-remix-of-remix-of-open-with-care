@@ -83,8 +83,12 @@ function MatchPage() {
     return ALL_TABS.filter((t) => {
       if (t === "Markets") return !m.finished && d.markets.length > 0;
       if (t === "Lineups") return Boolean(d.lineups);
+      if (t === "Box score") return Boolean(d.boxScore);
+      if (t === "Probabilities") return d.probabilities.length > 0;
+      if (t === "Commentary") return d.comments.length > 0;
       return true;
     });
+
   }, [d, m]);
 
 
