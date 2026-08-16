@@ -214,6 +214,14 @@ function MatchPage() {
                   {activeTab === "Statistics" && (
                     <StatisticsTab stats={d.statistics} home={m.home} away={m.away} />
                   )}
+                  {activeTab === "Box score" && d.boxScore && (
+                    <BoxScoreTab box={d.boxScore} home={m.home} away={m.away} />
+                  )}
+                  {activeTab === "Probabilities" && (
+                    <ProbabilitiesTab rows={d.probabilities} home={m.home} away={m.away} />
+                  )}
+                  {activeTab === "Commentary" && <CommentaryTab rows={d.comments} />}
+
                   {activeTab === "Lineups" && d.lineups && (
                     <LineupsTab lineups={d.lineups} home={m.home} away={m.away} />
                   )}
