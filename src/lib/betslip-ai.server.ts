@@ -30,9 +30,64 @@ type Candidate = {
   options: Array<{ market: string; odd: number }>;
 };
 
+/**
+ * Zero-configuration generator. Builds the slip from the free live fixture and
+ * odds feed only — no API key, no external AI service. It is also the fallback
+ * whenever the AI model is unavailable, so the button always returns a slip.
+ */
+function localSlip(candidates: Candidate[], legs: number, risk: SlipRequest["risk"]): SlipResult {
+  const band =
+    risk === "safe" ? [1.15, 1.65] : risk === "high" ? [2.0, 6.0] : [1.45, 2.35];
+  const target = (band[0]! + band[1]!) / 2;
+
+  const scored = candidates
+    .map((c) => {
+      const inBand = c.options.filter((o) => o.odd >= band[0]! && o.odd <= band[1]!);
+      const pool = inBand.length ? inBand : c.options;
+      const option = pool.reduce((best, o) =>
+        Math.abs(o.odd - target) < Math.abs(best.odd - target) ? o : best,
+      );
+      return { c, option, distance: Math.abs(option.odd - target) };
+    })
+    .sort((a, b) => a.distance - b.distance);
+
+  const out: SlipLeg[] = [];
+  const usedLeagues = new Set<string>();
+  for (const pass of [1, 2]) {
+    for (const s of scored) {
+      if (out.length >= legs) break;
+      if (out.some((l) => l.matchId === s.c.matchId)) continue;
+      // First pass spreads picks across different competitions.
+      if (pass === 1 && usedLeagues.has(s.c.league)) continue;
+      usedLeagues.add(s.c.league);
+      out.push({
+        id: `${s.c.matchId}-${s.option.market}`,
+        matchId: s.c.matchId,
+        event: s.c.event,
+        market: s.option.market,
+        odd: s.option.odd,
+        kickoff: s.c.kickoff,
+        league: s.c.league,
+        reason:
+          risk === "safe"
+            ? "Short-priced favourite, lowest-variance pick"
+            : risk === "high"
+              ? "Higher-priced value angle from the odds board"
+              : "Balanced price against the rest of the board",
+      });
+    }
+  }
+
+  if (out.length === 0) return { legs: [], error: "No priced matches available right now." };
+  const total = out.reduce((n, l) => n * l.odd, 1);
+  return {
+    legs: out,
+    summary: `${out.length}-leg ${risk} slip built from live odds, total odds ${total.toFixed(2)}.`,
+  };
+}
+
 export async function generateBetSlip(req: SlipRequest): Promise<SlipResult> {
   const apiKey = process.env["LOVABLE_API_KEY"];
-  if (!apiKey) return { legs: [], error: "AI generator is not configured." };
 
   const pools = await Promise.all([
     fetchMatches({ sport: req.sport, scope: "topbets" }),
@@ -65,6 +120,8 @@ export async function generateBetSlip(req: SlipRequest): Promise<SlipResult> {
     return { legs: [], error: "No priced upcoming matches available right now." };
 
   const legs = Math.max(2, Math.min(8, Math.round(req.legs)));
+  // No AI key configured: use the free built-in generator.
+  if (!apiKey) return localSlip(candidates, legs, req.risk);
   const riskNote =
     req.risk === "safe"
       ? "Prefer short odds (1.20–1.60) on clear favourites."
@@ -98,9 +155,7 @@ export async function generateBetSlip(req: SlipRequest): Promise<SlipResult> {
       }),
     });
 
-    if (res.status === 429) return { legs: [], error: "Rate limit reached, try again shortly." };
-    if (res.status === 402) return { legs: [], error: "AI credits exhausted." };
-    if (!res.ok) return { legs: [], error: "The generator is unavailable right now." };
+    if (!res.ok) return localSlip(candidates, legs, req.risk);
 
     const body = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
     const raw = body.choices?.[0]?.message?.content ?? "";
@@ -130,9 +185,9 @@ export async function generateBetSlip(req: SlipRequest): Promise<SlipResult> {
       });
     }
 
-    if (out.length === 0) return { legs: [], error: "The generator returned no usable picks." };
+    if (out.length === 0) return localSlip(candidates, legs, req.risk);
     return { legs: out, summary: parsed.summary?.slice(0, 200) ?? "" };
   } catch {
-    return { legs: [], error: "The generator is unavailable right now." };
+    return localSlip(candidates, legs, req.risk);
   }
 }
