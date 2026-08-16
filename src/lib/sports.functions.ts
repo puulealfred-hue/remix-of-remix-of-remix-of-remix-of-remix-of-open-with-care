@@ -74,3 +74,68 @@ export const getLeagueActivity = createServerFn({ method: "GET" })
     const { fetchLeagueActivity } = await import("./allsports.server");
     return fetchLeagueActivity(data.sport ?? "football", data.scope ?? "today");
   });
+
+export const getCountries = createServerFn({ method: "GET" })
+  .inputValidator((data: { sport?: Sport }) => data ?? {})
+  .handler(async ({ data }) => {
+    const { fetchCountries } = await import("./allsports.server");
+    return fetchCountries(data.sport ?? "football");
+  });
+
+export const getSeasons = createServerFn({ method: "GET" })
+  .inputValidator((data: { sport?: Sport; leagueKey: number }) => ({
+    sport: (data.sport ?? "football") as Sport,
+    leagueKey: Number(data.leagueKey ?? 0),
+  }))
+  .handler(async ({ data }) => {
+    const { fetchSeasons } = await import("./allsports.server");
+    return fetchSeasons(data.sport, data.leagueKey);
+  });
+
+export const getStandings = createServerFn({ method: "GET" })
+  .inputValidator((data: { sport?: Sport; leagueKey: number }) => ({
+    sport: (data.sport ?? "football") as Sport,
+    leagueKey: Number(data.leagueKey ?? 0),
+  }))
+  .handler(async ({ data }) => {
+    const { fetchLeagueStandings } = await import("./allsports.server");
+    return fetchLeagueStandings(data.sport, data.leagueKey);
+  });
+
+export const getTopScorers = createServerFn({ method: "GET" })
+  .inputValidator((data: { sport?: Sport; leagueKey: number }) => ({
+    sport: (data.sport ?? "football") as Sport,
+    leagueKey: Number(data.leagueKey ?? 0),
+  }))
+  .handler(async ({ data }) => {
+    const { fetchTopScorers } = await import("./allsports.server");
+    return fetchTopScorers(data.sport, data.leagueKey);
+  });
+
+export const getTeams = createServerFn({ method: "GET" })
+  .inputValidator(
+    (data: { sport?: Sport; leagueKey?: number | null; teamKey?: number | null; search?: string | null }) => ({
+      sport: (data.sport ?? "football") as Sport,
+      leagueKey: data.leagueKey ?? null,
+      teamKey: data.teamKey ?? null,
+      search: data.search ?? null,
+    }),
+  )
+  .handler(async ({ data }) => {
+    const { fetchTeams } = await import("./allsports.server");
+    return fetchTeams(data.sport, data);
+  });
+
+export const getPlayers = createServerFn({ method: "GET" })
+  .inputValidator(
+    (data: { sport?: Sport; search?: string | null; playerKey?: number | null; teamKey?: number | null }) => ({
+      sport: (data.sport ?? "football") as Sport,
+      search: data.search ?? null,
+      playerKey: data.playerKey ?? null,
+      teamKey: data.teamKey ?? null,
+    }),
+  )
+  .handler(async ({ data }) => {
+    const { fetchPlayers } = await import("./allsports.server");
+    return fetchPlayers(data.sport, data);
+  });
