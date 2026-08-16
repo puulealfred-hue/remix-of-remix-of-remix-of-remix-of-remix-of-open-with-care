@@ -890,7 +890,11 @@ export async function fetchMatchDetails(sport: Sport, matchId: string): Promise<
     substitutions: [],
     lineups: null,
     videos: [],
+    comments: [],
+    probabilities: [],
+    boxScore: null,
     referee: "",
+
   };
 
   const live = (await call<Json[]>(sport, { met: "Livescore", matchId }, 20_000)) ?? [];
