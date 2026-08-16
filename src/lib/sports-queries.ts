@@ -1,5 +1,11 @@
 import { keepPreviousData, queryOptions } from "@tanstack/react-query";
-import { getMatches, getMatchDetails, getLeagues, getLiveCounts } from "./sports.functions";
+import {
+  getMatches,
+  getMatchDetails,
+  getLeagues,
+  getLiveCounts,
+  getLeagueActivity,
+} from "./sports.functions";
 import type { MatchScope, Sport } from "./sports-types";
 
 export type { Sport, MatchScope } from "./sports-types";
@@ -74,3 +80,13 @@ export const matchDetailsQuery = (sport: Sport, matchId: string) =>
 export type EventRow = MatchDetails["goals"][number];
 export type MatchLineups = NonNullable<MatchDetails["lineups"]>;
 export type VideoItem = MatchDetails["videos"][number];
+
+export type LeagueActivity = Awaited<ReturnType<typeof getLeagueActivity>>[number];
+
+export const leagueActivityQuery = (sport: Sport, scope: MatchScope) =>
+  queryOptions({
+    queryKey: ["league-activity", sport, scope],
+    queryFn: () => getLeagueActivity({ data: { sport, scope } }),
+    staleTime: 5 * 60_000,
+    placeholderData: keepPreviousData,
+  });
