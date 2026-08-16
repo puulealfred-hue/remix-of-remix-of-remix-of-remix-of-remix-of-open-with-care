@@ -908,27 +908,53 @@ export async function fetchMatchDetails(sport: Sport, matchId: string): Promise<
     (isTennis ? fixture["second_player_key"] : fixture["away_team_key"]) ?? "",
   );
 
-  const [oddsRes, h2hRes, standings, videoRes] = await Promise.all([
-    call<Record<string, unknown>>(sport, { met: "Odds", matchId }, 3 * 60_000).catch(() => null),
-    firstTeamId && secondTeamId
-      ? call<{ H2H?: Json[]; firstTeamResults?: Json[]; secondTeamResults?: Json[] }>(
-          sport,
-          { met: "H2H", firstTeamId, secondTeamId },
-          10 * 60_000,
-        ).catch(() => null)
-      : Promise.resolve(null),
-    fetchStandings(sport, Number(fixture["league_key"] ?? 0)).catch(() => []),
-    call<Json[]>(sport, { met: "Videos", matchId }, 10 * 60_000).catch(() => null),
-  ]);
+  const isFootball = sport === "football";
 
+  const [oddsRes, fullOddsRes, h2hRes, standings, videoRes, probRes, commentRes] =
+    await Promise.all([
+      call<Record<string, unknown>>(sport, { met: "Odds", matchId }, 3 * 60_000).catch(() => null),
+      call<Record<string, unknown>>(sport, { met: "FullOdds", matchId }, 3 * 60_000).catch(
+        () => null,
+      ),
+      firstTeamId && secondTeamId
+        ? call<{ H2H?: Json[]; firstTeamResults?: Json[]; secondTeamResults?: Json[] }>(
+            sport,
+            { met: "H2H", firstTeamId, secondTeamId },
+            10 * 60_000,
+          ).catch(() => null)
+        : Promise.resolve(null),
+      fetchStandings(sport, Number(fixture["league_key"] ?? 0)).catch(() => []),
+      call<Json[]>(sport, { met: "Videos", matchId }, 10 * 60_000).catch(() => null),
+      isFootball
+        ? call<Json[]>(sport, { met: "Probabilities", matchId }, 5 * 60_000).catch(() => null)
+        : Promise.resolve(null),
+      isFootball
+        ? call<Record<string, unknown>>(sport, { met: "Comments", matchId }, 30_000).catch(
+            () => null,
+          )
+        : Promise.resolve(null),
+    ]);
 
-  const markets = parseOddsNode(sport, oddsRes?.[matchId] ?? null);
+  // Odds + FullOdds are merged so every market the provider publishes is shown.
+  const baseMarkets = parseOddsNode(sport, oddsRes?.[matchId] ?? null);
+  const fullMarkets = parseNestedOdds(
+    (fullOddsRes?.[matchId] && typeof fullOddsRes[matchId] === "object"
+      ? fullOddsRes[matchId]
+      : {}) as Json,
+  );
+  const merged = new Map<string, Market>();
+  for (const mk of [...baseMarkets, ...fullMarkets]) {
+    const prev = merged.get(mk.name);
+    if (!prev || mk.outcomes.length > prev.outcomes.length) merged.set(mk.name, mk);
+  }
+  const markets = [...merged.values()];
   const lineupNode = fixture["lineups"];
   const hasLineups = lineupNode && typeof lineupNode === "object";
 
   return {
     match: normalise(sport, fixture, markets),
     markets,
+
     statistics: toStats(fixture["statistics"]),
     h2h: (h2hRes?.H2H ?? []).slice(0, 12).map((g) => toGame(sport, g)),
     homeRecent: (h2hRes?.firstTeamResults ?? []).slice(0, 8).map((g) => toGame(sport, g)),
