@@ -668,6 +668,22 @@ export type TeamLineup = {
   missing: LineupPlayer[];
 };
 export type VideoItem = { title: string; url: string };
+export type CommentRow = { time: string; text: string; info: string };
+export type ProbabilityRow = { label: string; home: number; away: number };
+export type BoxScorePlayer = {
+  name: string;
+  position: string;
+  minutes: string;
+  points: string;
+  rebounds: string;
+  assists: string;
+  steals: string;
+  blocks: string;
+  turnovers: string;
+  fouls: string;
+  plusMinus: string;
+};
+export type BoxScore = { home: BoxScorePlayer[]; away: BoxScorePlayer[] };
 
 export type MatchDetails = {
   match: Match | null;
@@ -682,8 +698,78 @@ export type MatchDetails = {
   substitutions: EventRow[];
   lineups: { home: TeamLineup; away: TeamLineup } | null;
   videos: VideoItem[];
+  comments: CommentRow[];
+  probabilities: ProbabilityRow[];
+  boxScore: BoxScore | null;
   referee: string;
 };
+
+/** Provider `Probabilities` row -> readable percentage pairs. */
+function toProbabilities(raw: unknown): ProbabilityRow[] {
+  const row = (Array.isArray(raw) ? (raw[0] as Json | undefined) : undefined) ?? null;
+  if (!row) return [];
+  const pct = (v: unknown) => {
+    const n = Number(v);
+    return Number.isFinite(n) ? Math.round(n) : null;
+  };
+  const pairs: Array<[string, unknown, unknown]> = [
+    ["Home win / Away win", row["event_HW"], row["event_AW"]],
+    ["Draw", row["event_D"], row["event_D"]],
+    ["Home or draw / Away or draw", row["event_HW_D"], row["event_AW_D"]],
+    ["Both teams score / No goal", row["event_bts"], row["event_ots"]],
+    ["Over 2.5 / Under 2.5", row["event_O"], row["event_U"]],
+    ["Over 1.5 / Under 1.5", row["event_O_1"], row["event_U_1"]],
+    ["Over 3.5 / Under 3.5", row["event_O_3"], row["event_U_3"]],
+  ];
+  for (const line of ["05", "15", "25", "35", "45"]) {
+    pairs.push([
+      `Asian handicap ${line[0]}.${line[1]}`,
+      row[`event_ah_h_${line}`],
+      row[`event_ah_a_${line}`],
+    ]);
+  }
+  return pairs
+    .map(([label, h, a]) => ({ label, home: pct(h) ?? -1, away: pct(a) ?? -1 }))
+    .filter((p) => p.home >= 0 && p.away >= 0);
+}
+
+function toComments(raw: unknown, matchId: string): CommentRow[] {
+  const node = (raw && typeof raw === "object" ? (raw as Json) : {}) as Json;
+  const list = Array.isArray(node[matchId])
+    ? (node[matchId] as Json[])
+    : (Object.values(node).find(Array.isArray) as Json[] | undefined) ?? [];
+  return list
+    .map((c) => ({
+      time: String(c["comments_time"] ?? ""),
+      text: String(c["comments_text"] ?? ""),
+      info: String(c["comments_state_info"] ?? "" ?? ""),
+    }))
+    .filter((c) => c.text)
+    .reverse();
+}
+
+function toBoxScore(raw: unknown): BoxScore | null {
+  if (!raw || typeof raw !== "object") return null;
+  const node = raw as Json;
+  const side = (v: unknown): BoxScorePlayer[] =>
+    (Array.isArray(v) ? (v as Json[]) : []).map((p) => ({
+      name: String(p["player"] ?? ""),
+      position: String(p["player_position"] ?? ""),
+      minutes: String(p["player_minutes"] ?? ""),
+      points: String(p["player_points"] ?? ""),
+      rebounds: String(p["player_total_rebounds"] ?? ""),
+      assists: String(p["player_assists"] ?? ""),
+      steals: String(p["player_steals"] ?? ""),
+      blocks: String(p["player_blocks"] ?? ""),
+      turnovers: String(p["player_turnovers"] ?? ""),
+      fouls: String(p["player_personal_fouls"] ?? ""),
+      plusMinus: String(p["player_plus_minus"] ?? ""),
+    })).filter((p) => p.name);
+  const home = side(node["home_team"]);
+  const away = side(node["away_team"]);
+  return home.length || away.length ? { home, away } : null;
+}
+
 
 
 function toGame(sport: Sport, g: Json): H2HGame {
