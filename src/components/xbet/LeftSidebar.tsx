@@ -13,7 +13,13 @@ import {
 import { useBetSlip } from "./BetSlipContext";
 import { useSportFilters } from "./SportFilterContext";
 import { LiveEventSkeleton, LeagueListSkeleton } from "./Skeletons";
-import { leaguesQuery, liveCountsQuery, matchesQuery, type League } from "@/lib/sports-queries";
+import {
+  leaguesQuery,
+  liveCountsQuery,
+  matchesQuery,
+  leagueActivityQuery,
+  type League,
+} from "@/lib/sports-queries";
 import { SPORTS, SPORT_LABELS, type Sport } from "@/lib/sports-types";
 import { useFavorites } from "@/lib/favorites";
 
@@ -354,7 +360,7 @@ export function LeftSidebar() {
 
       <div className="overflow-hidden rounded-b-xl bg-xb-panel shadow-sm">
         <div className="flex items-center justify-between border-b border-xb-line px-3 py-2 text-[12px] font-bold text-xb-blue">
-          <span>{(leagues.data ?? []).length} leagues</span>
+          <span>{byCountry.reduce((n, [, l]) => n + l.length, 0)} leagues with matches</span>
           <Globe className="h-4 w-4 text-xb-text-muted" />
         </div>
 
@@ -401,6 +407,7 @@ export function LeftSidebar() {
               country={country}
               leagues={list}
               activeLeague={leagueId}
+              counts={matchCounts}
               onPick={(l) => setLeague(l.key, l.countryKey || null)}
             />
           ))}
