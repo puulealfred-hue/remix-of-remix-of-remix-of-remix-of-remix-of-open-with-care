@@ -70,7 +70,11 @@ function CountryGroup({
                 <span className="h-4 w-4 shrink-0 rounded-full bg-xb-odds-hover" />
               )}
               <span className="truncate">{l.name}</span>
+              <span className="ml-auto shrink-0 text-[10px] text-xb-text-muted">
+                {counts.get(l.key) ?? 0}
+              </span>
             </button>
+
           ))}
 
         </div>
