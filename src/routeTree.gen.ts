@@ -24,6 +24,7 @@ import { Route as ResultsRouteImport } from './routes/results'
 import { Route as RoyalFortuneRouteImport } from './routes/royal-fortune'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SlotRouteImport } from './routes/slot'
+import { Route as StandingsRouteImport } from './routes/standings'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as VirtualRouteImport } from './routes/virtual'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
@@ -126,6 +127,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
 const SlotRoute = SlotRouteImport.update({
   id: '/slot',
   path: '/slot',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StandingsRoute = StandingsRouteImport.update({
+  id: '/standings',
+  path: '/standings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TermsRoute = TermsRouteImport.update({
@@ -290,6 +296,7 @@ export interface FileRoutesByFullPath {
   '/royal-fortune': typeof RoyalFortuneRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/slot': typeof SlotRoute
+  '/standings': typeof StandingsRoute
   '/terms': typeof TermsRoute
   '/virtual': typeof VirtualRoute
   '/admin/content': typeof AdminContentRoute
@@ -334,6 +341,7 @@ export interface FileRoutesByTo {
   '/royal-fortune': typeof RoyalFortuneRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/slot': typeof SlotRoute
+  '/standings': typeof StandingsRoute
   '/terms': typeof TermsRoute
   '/virtual': typeof VirtualRoute
   '/admin/content': typeof AdminContentRoute
@@ -380,6 +388,7 @@ export interface FileRoutesById {
   '/royal-fortune': typeof RoyalFortuneRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/slot': typeof SlotRoute
+  '/standings': typeof StandingsRoute
   '/terms': typeof TermsRoute
   '/virtual': typeof VirtualRoute
   '/admin/content': typeof AdminContentRoute
@@ -427,6 +436,7 @@ export interface FileRouteTypes {
     | '/royal-fortune'
     | '/sitemap.xml'
     | '/slot'
+    | '/standings'
     | '/terms'
     | '/virtual'
     | '/admin/content'
@@ -471,6 +481,7 @@ export interface FileRouteTypes {
     | '/royal-fortune'
     | '/sitemap.xml'
     | '/slot'
+    | '/standings'
     | '/terms'
     | '/virtual'
     | '/admin/content'
@@ -516,6 +527,7 @@ export interface FileRouteTypes {
     | '/royal-fortune'
     | '/sitemap.xml'
     | '/slot'
+    | '/standings'
     | '/terms'
     | '/virtual'
     | '/admin/content'
@@ -562,6 +574,7 @@ export interface RootRouteChildren {
   RoyalFortuneRoute: typeof RoyalFortuneRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SlotRoute: typeof SlotRoute
+  StandingsRoute: typeof StandingsRoute
   TermsRoute: typeof TermsRoute
   VirtualRoute: typeof VirtualRoute
   MatchMatchIdRoute: typeof MatchMatchIdRoute
@@ -679,6 +692,13 @@ declare module '@tanstack/react-router' {
       path: '/slot'
       fullPath: '/slot'
       preLoaderRoute: typeof SlotRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/standings': {
+      id: '/standings'
+      path: '/standings'
+      fullPath: '/standings'
+      preLoaderRoute: typeof StandingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/terms': {
@@ -940,6 +960,7 @@ const rootRouteChildren: RootRouteChildren = {
   RoyalFortuneRoute: RoyalFortuneRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   SlotRoute: SlotRoute,
+  StandingsRoute: StandingsRoute,
   TermsRoute: TermsRoute,
   VirtualRoute: VirtualRoute,
   MatchMatchIdRoute: MatchMatchIdRoute,
