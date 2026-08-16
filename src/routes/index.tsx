@@ -9,6 +9,13 @@ import { MobileNav } from "@/components/xbet/MobileNav";
 
 
 export const Route = createFileRoute("/")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    sport: (["football", "basketball", "tennis"] as const).includes(search["sport"] as never)
+      ? (search["sport"] as "football" | "basketball" | "tennis")
+      : undefined,
+    league: Number(search["league"]) > 0 ? Number(search["league"]) : undefined,
+    country: Number(search["country"]) > 0 ? Number(search["country"]) : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "BET PLUS+ — Best Online Betting Site, Live Odds & Aviator" },
@@ -73,8 +80,14 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  const { sport, league, country } = Route.useSearch();
   return (
-    <SportFilterProvider>
+    <SportFilterProvider
+      initialSport={sport ?? "football"}
+      initialScope={league || country ? "upcoming" : "today"}
+      initialLeagueIds={league ? [league] : []}
+      initialCountryIds={country ? [country] : []}
+    >
       <div className="flex h-[100dvh] flex-col overflow-hidden bg-xb-page font-xb">
         <Header />
         <main className="flex min-h-0 flex-1 gap-2 overflow-hidden px-0 pt-1 md:px-2 md:pt-2">
