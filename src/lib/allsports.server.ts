@@ -1030,7 +1030,13 @@ export async function fetchTeams(
     key: Number(t["team_key"] ?? 0),
     name: String(t["team_name"] ?? "").trim(),
     logo: (t["team_logo"] as string | null) ?? null,
-    coach: String((Array.isArray(t["coaches"]) ? ((t["coaches"] as Json[])[0]?.["coach_name"] ?? "") : "")),
+    coach: String(
+      Array.isArray(t["coaches"])
+        ? ((t["coaches"] as Json[])[0]?.["coache_name"] ??
+            (t["coaches"] as Json[])[0]?.["coach_name"] ??
+            "")
+        : "",
+    ),
     players: toSquad(t["players"]),
   }));
 }
