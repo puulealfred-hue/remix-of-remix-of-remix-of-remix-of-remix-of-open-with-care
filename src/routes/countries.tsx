@@ -66,7 +66,7 @@ function CountryCard({ group, sport }: { group: CountryGroup; sport: Sport }) {
             <Link
               key={l.leagueKey}
               to="/"
-              search={{ sport, league: l.leagueKey, country: undefined }}
+              search={{ sport, league: l.leagueKey }}
               className="flex items-center gap-2 border-t border-xb-line px-4 py-2 text-[12px] text-xb-text-muted hover:text-xb-blue"
             >
               {l.leagueLogo ? (
