@@ -90,3 +90,81 @@ export const leagueActivityQuery = (sport: Sport, scope: MatchScope) =>
     staleTime: 5 * 60_000,
     placeholderData: keepPreviousData,
   });
+
+/* ---------------- provider directory widgets ---------------- */
+
+import {
+  getCountries,
+  getSeasons,
+  getStandings,
+  getTopScorers,
+  getTeams,
+  getPlayers,
+} from "./sports.functions";
+
+export type Country = Awaited<ReturnType<typeof getCountries>>[number];
+export type Season = Awaited<ReturnType<typeof getSeasons>>[number];
+export type StandingRow = Awaited<ReturnType<typeof getStandings>>[number];
+export type TopScorer = Awaited<ReturnType<typeof getTopScorers>>[number];
+export type Team = Awaited<ReturnType<typeof getTeams>>[number];
+export type PlayerRow = Awaited<ReturnType<typeof getPlayers>>[number];
+
+export const countriesQuery = (sport: Sport) =>
+  queryOptions({
+    queryKey: ["countries", sport],
+    queryFn: () => getCountries({ data: { sport } }),
+    staleTime: 12 * 60 * 60_000,
+    placeholderData: keepPreviousData,
+  });
+
+export const seasonsQuery = (sport: Sport, leagueKey: number) =>
+  queryOptions({
+    queryKey: ["seasons", sport, leagueKey],
+    queryFn: () => getSeasons({ data: { sport, leagueKey } }),
+    enabled: leagueKey > 0,
+    staleTime: 6 * 60 * 60_000,
+  });
+
+export const standingsQuery = (sport: Sport, leagueKey: number) =>
+  queryOptions({
+    queryKey: ["standings", sport, leagueKey],
+    queryFn: () => getStandings({ data: { sport, leagueKey } }),
+    enabled: leagueKey > 0,
+    staleTime: 15 * 60_000,
+    placeholderData: keepPreviousData,
+  });
+
+export const topScorersQuery = (sport: Sport, leagueKey: number) =>
+  queryOptions({
+    queryKey: ["topscorers", sport, leagueKey],
+    queryFn: () => getTopScorers({ data: { sport, leagueKey } }),
+    enabled: leagueKey > 0,
+    staleTime: 30 * 60_000,
+    placeholderData: keepPreviousData,
+  });
+
+export const teamsQuery = (sport: Sport, leagueKey: number) =>
+  queryOptions({
+    queryKey: ["teams", sport, "league", leagueKey],
+    queryFn: () => getTeams({ data: { sport, leagueKey } }),
+    enabled: leagueKey > 0,
+    staleTime: 30 * 60_000,
+    placeholderData: keepPreviousData,
+  });
+
+export const teamQuery = (sport: Sport, teamKey: number) =>
+  queryOptions({
+    queryKey: ["teams", sport, "team", teamKey],
+    queryFn: () => getTeams({ data: { sport, teamKey } }),
+    enabled: teamKey > 0,
+    staleTime: 30 * 60_000,
+  });
+
+export const playerSearchQuery = (sport: Sport, search: string) =>
+  queryOptions({
+    queryKey: ["players", sport, search],
+    queryFn: () => getPlayers({ data: { sport, search } }),
+    enabled: search.trim().length >= 3,
+    staleTime: 10 * 60_000,
+    placeholderData: keepPreviousData,
+  });

@@ -366,6 +366,21 @@ export function LeftSidebar() {
           </Link>
         </div>
 
+        <div className="flex flex-wrap gap-x-3 gap-y-1 border-b border-xb-line px-3 py-2 text-[12px] font-bold text-xb-blue">
+          <Link to="/standings" search={{ sport }} className="hover:underline">
+            Standings
+          </Link>
+          <Link to="/topscorers" search={{ sport }} className="hover:underline">
+            Top scorers
+          </Link>
+          <Link to="/teams" search={{ sport }} className="hover:underline">
+            Teams
+          </Link>
+          <Link to="/players" className="hover:underline">
+            Players
+          </Link>
+        </div>
+
         <div className="bg-xb-odds px-3 py-2 text-[13px] font-medium text-xb-text">Sports</div>
         {SPORTS.map((s: Sport) => (
           <button

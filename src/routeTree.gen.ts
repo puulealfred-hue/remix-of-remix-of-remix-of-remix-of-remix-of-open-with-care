@@ -18,13 +18,17 @@ import { Route as CountriesRouteImport } from './routes/countries'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as LuckyWinnerRouteImport } from './routes/lucky-winner'
 import { Route as PartnershipRouteImport } from './routes/partnership'
+import { Route as PlayersRouteImport } from './routes/players'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ResponsibleGamingRouteImport } from './routes/responsible-gaming'
 import { Route as ResultsRouteImport } from './routes/results'
 import { Route as RoyalFortuneRouteImport } from './routes/royal-fortune'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SlotRouteImport } from './routes/slot'
+import { Route as StandingsRouteImport } from './routes/standings'
+import { Route as TeamsRouteImport } from './routes/teams'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as TopscorersRouteImport } from './routes/topscorers'
 import { Route as VirtualRouteImport } from './routes/virtual'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminContentRouteImport } from './routes/admin.content'
@@ -50,6 +54,7 @@ import { Route as AdminUsersUserIdRouteImport } from './routes/admin.users.$user
 import { Route as ApiPublicTimeRouteImport } from './routes/api/public/time'
 import { Route as ResultDetailSportMatchIdRouteImport } from './routes/result-detail.$sport.$matchId'
 import { Route as ResultHighlightsSportMatchIdRouteImport } from './routes/result-highlights.$sport.$matchId'
+import { Route as TeamSportTeamIdRouteImport } from './routes/team.$sport.$teamId'
 import { Route as ApiPublicAviatorWalletRouteImport } from './routes/api/public/aviator.wallet'
 import { Route as ApiPublicRoyalWalletSplatRouteImport } from './routes/api/public/royal/wallet/$'
 
@@ -98,6 +103,11 @@ const PartnershipRoute = PartnershipRouteImport.update({
   path: '/partnership',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlayersRoute = PlayersRouteImport.update({
+  id: '/players',
+  path: '/players',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
@@ -128,9 +138,24 @@ const SlotRoute = SlotRouteImport.update({
   path: '/slot',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StandingsRoute = StandingsRouteImport.update({
+  id: '/standings',
+  path: '/standings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TeamsRoute = TeamsRouteImport.update({
+  id: '/teams',
+  path: '/teams',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TopscorersRoute = TopscorersRouteImport.update({
+  id: '/topscorers',
+  path: '/topscorers',
   getParentRoute: () => rootRouteImport,
 } as any)
 const VirtualRoute = VirtualRouteImport.update({
@@ -262,6 +287,11 @@ const ResultHighlightsSportMatchIdRoute =
     path: '/result-highlights/$sport/$matchId',
     getParentRoute: () => rootRouteImport,
   } as any)
+const TeamSportTeamIdRoute = TeamSportTeamIdRouteImport.update({
+  id: '/team/$sport/$teamId',
+  path: '/team/$sport/$teamId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicAviatorWalletRoute = ApiPublicAviatorWalletRouteImport.update({
   id: '/api/public/aviator/wallet',
   path: '/api/public/aviator/wallet',
@@ -284,13 +314,17 @@ export interface FileRoutesByFullPath {
   '/faq': typeof FaqRoute
   '/lucky-winner': typeof LuckyWinnerRoute
   '/partnership': typeof PartnershipRoute
+  '/players': typeof PlayersRoute
   '/privacy': typeof PrivacyRoute
   '/responsible-gaming': typeof ResponsibleGamingRoute
   '/results': typeof ResultsRoute
   '/royal-fortune': typeof RoyalFortuneRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/slot': typeof SlotRoute
+  '/standings': typeof StandingsRoute
+  '/teams': typeof TeamsRoute
   '/terms': typeof TermsRoute
+  '/topscorers': typeof TopscorersRoute
   '/virtual': typeof VirtualRoute
   '/admin/content': typeof AdminContentRoute
   '/admin/settings': typeof AdminSettingsRoute
@@ -309,6 +343,7 @@ export interface FileRoutesByFullPath {
   '/api/public/time': typeof ApiPublicTimeRoute
   '/result-detail/$sport/$matchId': typeof ResultDetailSportMatchIdRoute
   '/result-highlights/$sport/$matchId': typeof ResultHighlightsSportMatchIdRoute
+  '/team/$sport/$teamId': typeof TeamSportTeamIdRoute
   '/admin/activities/': typeof AdminActivitiesIndexRoute
   '/admin/affiliates/': typeof AdminAffiliatesIndexRoute
   '/admin/agents/': typeof AdminAgentsIndexRoute
@@ -328,13 +363,17 @@ export interface FileRoutesByTo {
   '/faq': typeof FaqRoute
   '/lucky-winner': typeof LuckyWinnerRoute
   '/partnership': typeof PartnershipRoute
+  '/players': typeof PlayersRoute
   '/privacy': typeof PrivacyRoute
   '/responsible-gaming': typeof ResponsibleGamingRoute
   '/results': typeof ResultsRoute
   '/royal-fortune': typeof RoyalFortuneRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/slot': typeof SlotRoute
+  '/standings': typeof StandingsRoute
+  '/teams': typeof TeamsRoute
   '/terms': typeof TermsRoute
+  '/topscorers': typeof TopscorersRoute
   '/virtual': typeof VirtualRoute
   '/admin/content': typeof AdminContentRoute
   '/admin/settings': typeof AdminSettingsRoute
@@ -353,6 +392,7 @@ export interface FileRoutesByTo {
   '/api/public/time': typeof ApiPublicTimeRoute
   '/result-detail/$sport/$matchId': typeof ResultDetailSportMatchIdRoute
   '/result-highlights/$sport/$matchId': typeof ResultHighlightsSportMatchIdRoute
+  '/team/$sport/$teamId': typeof TeamSportTeamIdRoute
   '/admin/activities': typeof AdminActivitiesIndexRoute
   '/admin/affiliates': typeof AdminAffiliatesIndexRoute
   '/admin/agents': typeof AdminAgentsIndexRoute
@@ -374,13 +414,17 @@ export interface FileRoutesById {
   '/faq': typeof FaqRoute
   '/lucky-winner': typeof LuckyWinnerRoute
   '/partnership': typeof PartnershipRoute
+  '/players': typeof PlayersRoute
   '/privacy': typeof PrivacyRoute
   '/responsible-gaming': typeof ResponsibleGamingRoute
   '/results': typeof ResultsRoute
   '/royal-fortune': typeof RoyalFortuneRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/slot': typeof SlotRoute
+  '/standings': typeof StandingsRoute
+  '/teams': typeof TeamsRoute
   '/terms': typeof TermsRoute
+  '/topscorers': typeof TopscorersRoute
   '/virtual': typeof VirtualRoute
   '/admin/content': typeof AdminContentRoute
   '/admin/settings': typeof AdminSettingsRoute
@@ -399,6 +443,7 @@ export interface FileRoutesById {
   '/api/public/time': typeof ApiPublicTimeRoute
   '/result-detail/$sport/$matchId': typeof ResultDetailSportMatchIdRoute
   '/result-highlights/$sport/$matchId': typeof ResultHighlightsSportMatchIdRoute
+  '/team/$sport/$teamId': typeof TeamSportTeamIdRoute
   '/admin/activities/': typeof AdminActivitiesIndexRoute
   '/admin/affiliates/': typeof AdminAffiliatesIndexRoute
   '/admin/agents/': typeof AdminAgentsIndexRoute
@@ -421,13 +466,17 @@ export interface FileRouteTypes {
     | '/faq'
     | '/lucky-winner'
     | '/partnership'
+    | '/players'
     | '/privacy'
     | '/responsible-gaming'
     | '/results'
     | '/royal-fortune'
     | '/sitemap.xml'
     | '/slot'
+    | '/standings'
+    | '/teams'
     | '/terms'
+    | '/topscorers'
     | '/virtual'
     | '/admin/content'
     | '/admin/settings'
@@ -446,6 +495,7 @@ export interface FileRouteTypes {
     | '/api/public/time'
     | '/result-detail/$sport/$matchId'
     | '/result-highlights/$sport/$matchId'
+    | '/team/$sport/$teamId'
     | '/admin/activities/'
     | '/admin/affiliates/'
     | '/admin/agents/'
@@ -465,13 +515,17 @@ export interface FileRouteTypes {
     | '/faq'
     | '/lucky-winner'
     | '/partnership'
+    | '/players'
     | '/privacy'
     | '/responsible-gaming'
     | '/results'
     | '/royal-fortune'
     | '/sitemap.xml'
     | '/slot'
+    | '/standings'
+    | '/teams'
     | '/terms'
+    | '/topscorers'
     | '/virtual'
     | '/admin/content'
     | '/admin/settings'
@@ -490,6 +544,7 @@ export interface FileRouteTypes {
     | '/api/public/time'
     | '/result-detail/$sport/$matchId'
     | '/result-highlights/$sport/$matchId'
+    | '/team/$sport/$teamId'
     | '/admin/activities'
     | '/admin/affiliates'
     | '/admin/agents'
@@ -510,13 +565,17 @@ export interface FileRouteTypes {
     | '/faq'
     | '/lucky-winner'
     | '/partnership'
+    | '/players'
     | '/privacy'
     | '/responsible-gaming'
     | '/results'
     | '/royal-fortune'
     | '/sitemap.xml'
     | '/slot'
+    | '/standings'
+    | '/teams'
     | '/terms'
+    | '/topscorers'
     | '/virtual'
     | '/admin/content'
     | '/admin/settings'
@@ -535,6 +594,7 @@ export interface FileRouteTypes {
     | '/api/public/time'
     | '/result-detail/$sport/$matchId'
     | '/result-highlights/$sport/$matchId'
+    | '/team/$sport/$teamId'
     | '/admin/activities/'
     | '/admin/affiliates/'
     | '/admin/agents/'
@@ -556,13 +616,17 @@ export interface RootRouteChildren {
   FaqRoute: typeof FaqRoute
   LuckyWinnerRoute: typeof LuckyWinnerRoute
   PartnershipRoute: typeof PartnershipRoute
+  PlayersRoute: typeof PlayersRoute
   PrivacyRoute: typeof PrivacyRoute
   ResponsibleGamingRoute: typeof ResponsibleGamingRoute
   ResultsRoute: typeof ResultsRoute
   RoyalFortuneRoute: typeof RoyalFortuneRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SlotRoute: typeof SlotRoute
+  StandingsRoute: typeof StandingsRoute
+  TeamsRoute: typeof TeamsRoute
   TermsRoute: typeof TermsRoute
+  TopscorersRoute: typeof TopscorersRoute
   VirtualRoute: typeof VirtualRoute
   MatchMatchIdRoute: typeof MatchMatchIdRoute
   WinnerTicketWinnerIdRoute: typeof WinnerTicketWinnerIdRoute
@@ -570,6 +634,7 @@ export interface RootRouteChildren {
   ApiPublicTimeRoute: typeof ApiPublicTimeRoute
   ResultDetailSportMatchIdRoute: typeof ResultDetailSportMatchIdRoute
   ResultHighlightsSportMatchIdRoute: typeof ResultHighlightsSportMatchIdRoute
+  TeamSportTeamIdRoute: typeof TeamSportTeamIdRoute
   ApiPublicAviatorWalletRoute: typeof ApiPublicAviatorWalletRoute
   ApiPublicRoyalWalletSplatRoute: typeof ApiPublicRoyalWalletSplatRoute
 }
@@ -639,6 +704,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PartnershipRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/players': {
+      id: '/players'
+      path: '/players'
+      fullPath: '/players'
+      preLoaderRoute: typeof PlayersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/privacy': {
       id: '/privacy'
       path: '/privacy'
@@ -681,11 +753,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SlotRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/standings': {
+      id: '/standings'
+      path: '/standings'
+      fullPath: '/standings'
+      preLoaderRoute: typeof StandingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/teams': {
+      id: '/teams'
+      path: '/teams'
+      fullPath: '/teams'
+      preLoaderRoute: typeof TeamsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/terms': {
       id: '/terms'
       path: '/terms'
       fullPath: '/terms'
       preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/topscorers': {
+      id: '/topscorers'
+      path: '/topscorers'
+      fullPath: '/topscorers'
+      preLoaderRoute: typeof TopscorersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/virtual': {
@@ -863,6 +956,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResultHighlightsSportMatchIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/team/$sport/$teamId': {
+      id: '/team/$sport/$teamId'
+      path: '/team/$sport/$teamId'
+      fullPath: '/team/$sport/$teamId'
+      preLoaderRoute: typeof TeamSportTeamIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/aviator/wallet': {
       id: '/api/public/aviator/wallet'
       path: '/api/public/aviator/wallet'
@@ -934,13 +1034,17 @@ const rootRouteChildren: RootRouteChildren = {
   FaqRoute: FaqRoute,
   LuckyWinnerRoute: LuckyWinnerRoute,
   PartnershipRoute: PartnershipRoute,
+  PlayersRoute: PlayersRoute,
   PrivacyRoute: PrivacyRoute,
   ResponsibleGamingRoute: ResponsibleGamingRoute,
   ResultsRoute: ResultsRoute,
   RoyalFortuneRoute: RoyalFortuneRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   SlotRoute: SlotRoute,
+  StandingsRoute: StandingsRoute,
+  TeamsRoute: TeamsRoute,
   TermsRoute: TermsRoute,
+  TopscorersRoute: TopscorersRoute,
   VirtualRoute: VirtualRoute,
   MatchMatchIdRoute: MatchMatchIdRoute,
   WinnerTicketWinnerIdRoute: WinnerTicketWinnerIdRoute,
@@ -948,6 +1052,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicTimeRoute: ApiPublicTimeRoute,
   ResultDetailSportMatchIdRoute: ResultDetailSportMatchIdRoute,
   ResultHighlightsSportMatchIdRoute: ResultHighlightsSportMatchIdRoute,
+  TeamSportTeamIdRoute: TeamSportTeamIdRoute,
   ApiPublicAviatorWalletRoute: ApiPublicAviatorWalletRoute,
   ApiPublicRoyalWalletSplatRoute: ApiPublicRoyalWalletSplatRoute,
 }
