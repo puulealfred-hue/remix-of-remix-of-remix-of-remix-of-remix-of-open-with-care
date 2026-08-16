@@ -180,6 +180,7 @@ function MatchPage() {
               {activeTab === "Markets" && (
                 <MarketsTab
                   markets={d.markets}
+                  match={m}
                   event={`${m.home} — ${m.away}`}
                   matchId={matchId}
                   sport={m.sport}
@@ -257,6 +258,8 @@ function MarketOutcome({
   sport,
   league,
   kickoff,
+  locked,
+  lockedTitle,
 }: {
   event: string;
   market: string;
@@ -267,10 +270,24 @@ function MarketOutcome({
   sport?: string | undefined;
   league?: string | undefined;
   kickoff?: string | undefined;
+  locked?: boolean;
+  lockedTitle?: string;
 }) {
   const { toggle, has } = useBetSlip();
   const active = has(id);
   const flash = useOddsFlash(odd);
+  if (locked) {
+    return (
+      <span
+        title={lockedTitle}
+        aria-label="Betting closed for this outcome"
+        className="flex flex-col items-center gap-1 rounded-lg bg-xb-odds px-2 py-2 text-xb-text-muted opacity-70"
+      >
+        <span className="text-[11px] font-medium uppercase">{label}</span>
+        <Lock className="h-3.5 w-3.5" />
+      </span>
+    );
+  }
   return (
     <button
       onClick={() => toggle({ id, matchId, event, market, odd, sport, league, kickoff })}
@@ -296,6 +313,7 @@ function MarketOutcome({
 
 function MarketsTab({
   markets,
+  match,
   event,
   matchId,
   sport,
@@ -303,6 +321,7 @@ function MarketsTab({
   kickoff,
 }: {
   markets: Market[];
+  match: LockableMatch;
   event: string;
   matchId: string;
   sport?: string | undefined;
@@ -347,6 +366,8 @@ function MarketsTab({
                 market={`${mk.name} · ${o.label}`}
                 label={o.label}
                 odd={o.odd}
+                locked={outcomeLocked(match, mk.name, o.label)}
+                lockedTitle={lockReason(match)}
               />
             ))}
           </div>
