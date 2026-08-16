@@ -6,16 +6,20 @@ import { MatchesPanel } from "@/components/xbet/MatchesPanel";
 import { RightSidebar } from "@/components/xbet/RightSidebar";
 import { SportFilterProvider } from "@/components/xbet/SportFilterContext";
 import { MobileNav } from "@/components/xbet/MobileNav";
+import type { Sport } from "@/lib/sports-types";
 
+
+type HomeSearch = { sport: Sport; league: number; country: number };
 
 export const Route = createFileRoute("/")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    sport: (["football", "basketball", "tennis"] as const).includes(search["sport"] as never)
-      ? (search["sport"] as "football" | "basketball" | "tennis")
-      : undefined,
-    league: Number(search["league"]) > 0 ? Number(search["league"]) : undefined,
-    country: Number(search["country"]) > 0 ? Number(search["country"]) : undefined,
-  }),
+  validateSearch: (search: Record<string, unknown>): Partial<HomeSearch> => {
+    const out: Partial<HomeSearch> = {};
+    const sport = search["sport"];
+    if (sport === "football" || sport === "basketball" || sport === "tennis") out.sport = sport;
+    if (Number(search["league"]) > 0) out.league = Number(search["league"]);
+    if (Number(search["country"]) > 0) out.country = Number(search["country"]);
+    return out;
+  },
   head: () => ({
     meta: [
       { title: "BET PLUS+ — Best Online Betting Site, Live Odds & Aviator" },
