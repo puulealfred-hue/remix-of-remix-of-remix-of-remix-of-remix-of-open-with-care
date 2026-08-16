@@ -975,7 +975,11 @@ export async function fetchMatchDetails(sport: Sport, matchId: string): Promise<
         url: String(v["video_url"] ?? ""),
       }))
       .filter((v) => v.url),
+    comments: toComments(commentRes, matchId),
+    probabilities: toProbabilities(probRes),
+    boxScore: toBoxScore(fixture["player_statistics"]),
     referee: String(fixture["event_referee"] ?? ""),
+
   };
 }
 
