@@ -1071,3 +1071,143 @@ function VideosTab({ videos }: { videos: VideoItem[] }) {
     </div>
   );
 }
+
+/* ---------------- provider extras ---------------- */
+
+function BoxScoreTab({
+  box,
+  home,
+  away,
+}: {
+  box: NonNullable<MatchDetails["boxScore"]>;
+  home: string;
+  away: string;
+}) {
+  const cols = [
+    ["Min", "minutes"],
+    ["Pts", "points"],
+    ["Reb", "rebounds"],
+    ["Ast", "assists"],
+    ["Stl", "steals"],
+    ["Blk", "blocks"],
+    ["TO", "turnovers"],
+    ["PF", "fouls"],
+    ["+/-", "plusMinus"],
+  ] as const;
+
+  const table = (title: string, rows: NonNullable<MatchDetails["boxScore"]>["home"]) => (
+    <div className="min-w-0">
+      <h3 className="px-3 py-2 text-[13px] font-bold text-xb-text">{title}</h3>
+      <div className="overflow-x-auto">
+        <table className="w-full text-[12px]">
+          <thead>
+            <tr className="bg-xb-odds text-left text-xb-text-muted">
+              <th className="px-2 py-2">Player</th>
+              <th className="px-2 py-2">Pos</th>
+              {cols.map(([label]) => (
+                <th key={label} className="px-2 py-2 text-right">
+                  {label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((p, i) => (
+              <tr key={`${p.name}-${i}`} className="border-b border-xb-line">
+                <td className="px-2 py-2 font-medium text-xb-text">{p.name}</td>
+                <td className="px-2 py-2 text-xb-text-muted">{p.position}</td>
+                {cols.map(([label, key]) => (
+                  <td key={label} className="px-2 py-2 text-right tabular-nums text-xb-text">
+                    {p[key] || "-"}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="grid gap-2 xl:grid-cols-2">
+      {table(home, box.home)}
+      {table(away, box.away)}
+    </div>
+  );
+}
+
+function ProbabilitiesTab({
+  rows,
+  home,
+  away,
+}: {
+  rows: MatchDetails["probabilities"];
+  home: string;
+  away: string;
+}) {
+  if (rows.length === 0) {
+    return (
+      <div className="px-3 py-6 text-[13px] text-xb-text-muted">
+        No probability model published for this match.
+      </div>
+    );
+  }
+  return (
+    <div className="p-3">
+      <p className="mb-3 text-[12px] text-xb-text-muted">
+        Provider probability model — left side favours {home}, right side favours {away}.
+      </p>
+      <div className="space-y-3">
+        {rows.map((r) => (
+          <div key={r.label}>
+            <div className="mb-1 flex items-center justify-between text-[12px]">
+              <span className="font-semibold tabular-nums text-xb-text">{r.home}%</span>
+              <span className="text-xb-text-muted">{r.label}</span>
+              <span className="font-semibold tabular-nums text-xb-text">{r.away}%</span>
+            </div>
+            <div className="flex h-1.5 gap-1">
+              <div className="flex flex-1 justify-end rounded-full bg-xb-odds">
+                <div
+                  className="h-full rounded-full bg-xb-accent"
+                  style={{ width: `${Math.min(100, r.home)}%` }}
+                />
+              </div>
+              <div className="flex-1 rounded-full bg-xb-odds">
+                <div
+                  className="h-full rounded-full bg-xb-accent"
+                  style={{ width: `${Math.min(100, r.away)}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CommentaryTab({ rows }: { rows: MatchDetails["comments"] }) {
+  if (rows.length === 0) {
+    return (
+      <div className="px-3 py-6 text-[13px] text-xb-text-muted">
+        No live commentary published for this match.
+      </div>
+    );
+  }
+  return (
+    <ul className="divide-y divide-xb-line">
+      {rows.map((c, i) => (
+        <li key={`${c.time}-${i}`} className="flex gap-3 px-3 py-2">
+          <span className="w-12 shrink-0 text-[12px] font-bold tabular-nums text-xb-text-muted">
+            {c.time}
+          </span>
+          <span className="min-w-0 text-[13px] text-xb-text">
+            {c.text}
+            {c.info ? <span className="text-xb-text-muted"> · {c.info}</span> : null}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
